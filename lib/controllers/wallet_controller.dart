@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Constant;
 import 'package:driver/constant/constant.dart';
 import 'package:driver/constant/show_toast_dialog.dart';
+import 'package:driver/config/cashfree_credentials.dart';
 import 'package:driver/controllers/cashfree_service_controller.dart';
 import 'package:driver/controllers/instamojo_service_controller.dart';
 import 'package:driver/controllers/mtnmomo_controller.dart';
@@ -125,16 +126,24 @@ class WalletController extends GetxController {
         instamojoModel.value = Instamojo.fromJson(jsonDecode(Preferences.getString(Preferences.instamojoSettings)));
         foloosiModel.value = Foloosi.fromJson(jsonDecode(Preferences.getString(Preferences.foloosiSettings)));
         payMongoModel.value = PayMongo.fromJson(jsonDecode(Preferences.getString(Preferences.payMongoSettings)));
-        cashfreeModel.value = Cashfree.fromJson(jsonDecode(Preferences.getString(Preferences.cashFreeSettings)));
+        cashfreeModel.value = Cashfree(
+          clientId: CashfreeCredentials.appId,
+          clientSecret: CashfreeCredentials.secretKey,
+          enable: true,
+          isSandbox: CashfreeCredentials.isSandbox,
+          name: 'Cashfree',
+        );
+        selectedPaymentMethod.value = "cashfree";
         isLoadingPayment.value = false;
-        flutterStipe.Stripe.publishableKey = stripeModel.value.clientpublishableKey.toString();
-        flutterStipe.Stripe.merchantIdentifier = 'Foodie Driver';
-        flutterStipe.Stripe.instance.applySettings();
+        // Other payment gateways disabled — only Cashfree is used
+        // flutterStipe.Stripe.publishableKey = stripeModel.value.clientpublishableKey.toString();
+        // flutterStipe.Stripe.merchantIdentifier = 'Foodie Driver';
+        // flutterStipe.Stripe.instance.applySettings();
         setRef();
 
-        razorPay.on(Razorpay.EVENT_PAYMENT_SUCCESS, handlePaymentSuccess);
-        razorPay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWaller);
-        razorPay.on(Razorpay.EVENT_PAYMENT_ERROR, handlePaymentError);
+        // razorPay.on(Razorpay.EVENT_PAYMENT_SUCCESS, handlePaymentSuccess);
+        // razorPay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWaller);
+        // razorPay.on(Razorpay.EVENT_PAYMENT_ERROR, handlePaymentError);
       },
     );
   }

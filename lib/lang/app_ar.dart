@@ -232,7 +232,7 @@ const Map<String, String> lnAr = {
   'Skip': 'تخطي',
   'Get Started': 'ابدأ الآن',
   'Next': 'التالي',
-  'Welcome to Foodie Driver': 'مرحبًا بك في فودي درايفر',
+  'Welcome to Tangzo Driver': 'مرحبًا بك في فودي درايفر',
   'Your Favorite Food Delivered Fast!': 'طعامك المفضل يتم توصيله بسرعة!',
   'Payment Method save successfully': 'تم حفظ طريقة الدفع بنجاح',
   "Please enter account Number": "يرجى إدخال رقم الحساب",

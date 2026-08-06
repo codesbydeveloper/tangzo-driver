@@ -207,8 +207,12 @@ class FireStoreUtils {
         if (event.docs.isNotEmpty) {
           Constant.currencyModel = CurrencyModel.fromJson(event.docs.first.data());
         } else {
-          Constant.currencyModel = CurrencyModel(id: "", code: "USD", decimalDigits: 2, enable: true, name: "US Dollar", symbol: "\$", symbolAtRight: false);
+          Constant.currencyModel = CurrencyModel(id: "", code: "INR", decimalDigits: 2, enable: true, name: "Indian Rupee", symbol: "₹", symbolAtRight: false);
         }
+        Constant.currencyModel!.symbol = "₹";
+        Constant.currencyModel!.code = "INR";
+        Constant.currencyModel!.name = "Indian Rupee";
+        Constant.currencyModel!.symbolAtRight = false;
       });
       await fireStore.collection(CollectionName.settings).doc("globalSettings").get().then((value) async {
         Constant.defaultCountryCode = value.data()?["defaultCountryCode"] ?? '';

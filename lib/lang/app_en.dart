@@ -242,7 +242,7 @@ const Map<String, String> enUS = {
   'Skip': 'Skip',
   'Get Started': 'Get Started',
   'Next': 'Next',
-  'Welcome to Foodie Driver': 'Welcome to Foodie Driver',
+  'Welcome to Tangzo Driver': 'Welcome to Tangzo Driver',
   'Your Favorite Food Delivered Fast!': 'Your Favorite Food Delivered Fast!',
   'Payment Method save successfully': 'Payment Method save successfully',
   "Please enter account Number": "Please enter account Number",

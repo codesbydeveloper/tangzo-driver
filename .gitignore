@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Payment gateway secrets (use cashfree_credentials.example.dart as template)
+lib/config/cashfree_credentials.dart

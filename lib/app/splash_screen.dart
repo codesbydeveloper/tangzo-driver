@@ -24,15 +24,15 @@ class SplashScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Image.asset(
-                  "assets/images/ic_logo.png",
-                  width: 75,
-                  height: 75,
+                  "assets/icons/ic_back_logo.png",
+                  // width: 75,
+                  // height: 75,
                 ),
                 const SizedBox(
                   height: 10,
                 ),
                 TranslatedText(
-                  "Welcome to Foodie Driver",
+                  "Welcome to Tangzo Driver",
                   style: TextStyle(color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey50, fontSize: 24, fontFamily: AppThemeData.bold),
                 ),
                 TranslatedText(
