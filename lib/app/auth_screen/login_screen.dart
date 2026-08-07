@@ -42,7 +42,7 @@ class LoginScreen extends StatelessWidget {
                     style: TextStyle(color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey900, fontSize: 22, fontFamily: AppThemeData.semiBold),
                   ),
                   TranslatedText(
-                    "Sign in to access your Foodie account and manage your deliveries seamlessly.",
+                    "Sign in to access your Tangzo account and manage your deliveries seamlessly.",
                     style: TextStyle(color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey500, fontFamily: AppThemeData.regular),
                   ),
                   const SizedBox(

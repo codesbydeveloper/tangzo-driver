@@ -409,7 +409,7 @@ class WalletController extends GetxController {
                     primary: AppThemeData.driverApp300,
                   ),
                 ),
-                merchantDisplayName: 'Foodie'));
+                merchantDisplayName: 'Tangzo'));
         displayStripePaymentSheet(amount: amount);
       }
     } catch (e, s) {
@@ -749,7 +749,7 @@ class WalletController extends GetxController {
     var options = {
       'key': razorPayModel.value.razorpayKey,
       'amount': amount * 100,
-      'name': 'Foodie',
+      'name': 'Tangzo',
       'order_id': orderId,
       "currency": "INR",
       'description': 'wallet Topup',

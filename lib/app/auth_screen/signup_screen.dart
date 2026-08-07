@@ -43,7 +43,7 @@ class SignupScreen extends StatelessWidget {
                       style: TextStyle(color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey900, fontSize: 22, fontFamily: AppThemeData.semiBold),
                     ),
                     TranslatedText(
-                      "Sign up now to start your journey as a Foodie driver and begin earning with every delivery.",
+                      "Sign up now to start your journey as a Tangzo driver and begin earning with every delivery.",
                       style: TextStyle(color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey500, fontFamily: AppThemeData.regular),
                     ),
                     const SizedBox(
