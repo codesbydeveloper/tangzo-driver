@@ -36,7 +36,7 @@ class Constant {
   static LocationData? locationDataFinal;
 
   static UserModel? userModel;
-  static const globalUrl = "https://foodie.siswebapp.com/";
+  static const globalUrl = "https://admin.tangzo.in/";
 
   static bool singleOrderReceive = false;
   static String driverLocationUpdate = '50';
@@ -49,10 +49,10 @@ class Constant {
 
   static String defaultCountryCode = '';
 
-  static String mapAPIKey = "";
+  static String mapAPIKey = "AIzaSyCJpkzNIEmPoiOUTc76RB-AwhCk06GN2JU";
   static String placeHolderImage = "";
 
-  static String senderId = '';
+  static String senderId = '728732933030';
   static String jsonNotificationFileURL = '';
 
   static String distanceType = "km";
