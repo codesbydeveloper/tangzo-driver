@@ -1099,6 +1099,27 @@ class FireStoreUtils {
     return inboxModel;
   }
 
+  static Future<UserModel?> getUserByPhoneNumber(
+      {required String countryCode, required String phoneNumber}) async {
+    UserModel? userModel;
+    try {
+      final snapshot = await fireStore
+          .collection(CollectionName.users)
+          .where('phoneNumber', isEqualTo: phoneNumber)
+          .where('countryCode', isEqualTo: countryCode)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        userModel = UserModel.fromJson(snapshot.docs.first.data());
+        userModel.id ??= snapshot.docs.first.id;
+      }
+    } catch (error) {
+      log("Failed to get user by phone: $error");
+    }
+    return userModel;
+  }
+
   static Future<UserModel?> getUserByEmail(String email) async {
     UserModel? userModel;
     try {

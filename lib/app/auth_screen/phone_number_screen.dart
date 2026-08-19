@@ -85,9 +85,9 @@ class PhoneNumberScreen extends StatelessWidget {
                     height: 32,
                   ),
                   TextFieldWidget(
-                    title: 'Phone Number',
+                    title: 'WhatsApp Number',
                     controller: controller.phoneNUmberEditingController.value,
-                    hintText: 'Enter Phone Number',
+                    hintText: 'Enter WhatsApp Number',
                     textInputType: const TextInputType.numberWithOptions(signed: true, decimal: true),
                     textInputAction: TextInputAction.done,
                     inputFormatters: [
@@ -177,7 +177,7 @@ class PhoneNumberScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: TranslatedText(
-                        "Send Code",
+                        "Send Code via WhatsApp",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey50,
