@@ -1,4 +1,4 @@
-package com.foodies.driver.driver
+package com.tangzo.driver
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.FlutterFragmentActivity
