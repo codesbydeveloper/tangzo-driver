@@ -29,8 +29,8 @@ if (flutterVersionName == null) {
 
 android {
     namespace = "com.tangzo.driver"
-    compileSdk = 36
-    ndkVersion = "29.0.14033849"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11 // Use VERSION_17 for now
@@ -48,9 +48,27 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24
-        targetSdk = 36
-        versionCode = 2
+        targetSdk = flutter.targetSdkVersion
+        versionCode = 3
         versionName = flutterVersionName
+        // Ship ARM ABIs only. x86_64 libs from payment SDKs (card.io/opencv)
+        // are 4 KB-aligned and fail Google Play 16 KB page-size checks.
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+            excludes += [
+                    "lib/x86_64/libcardioDecider.so",
+                    "lib/x86_64/libcardioRecognizer.so",
+                    "lib/x86_64/libcardioRecognizer_tegra2.so",
+                    "lib/x86_64/libopencv_core.so",
+                    "lib/x86_64/libopencv_imgproc.so",
+            ]
+        }
     }
 
 
