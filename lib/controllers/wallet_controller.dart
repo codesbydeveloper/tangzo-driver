@@ -32,7 +32,7 @@ import 'package:driver/payment/xenditModel.dart';
 import 'package:driver/payment/xenditScreen.dart';
 import 'package:driver/themes/app_them_data.dart';
 import 'package:flutter_paypal/flutter_paypal.dart';
-import 'package:foloosi_plugins/foloosi_plugins.dart';
+// import 'package:foloosi_plugins/foloosi_plugins.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:driver/models/payment_model/flutter_wave_model.dart';
 import 'package:driver/models/payment_model/mercado_pago_model.dart';
@@ -1094,42 +1094,42 @@ class WalletController extends GetxController {
     }
   }
 
-  Future<void> makeFoloosiPayment({required String amount, required String paymentDesc}) async {
-    if (foloosiModel.value.merchantKey == '' || foloosiModel.value.merchantKey?.isEmpty == true) {
-      ShowToastDialog.showToast("Foloosi merchant key is missing or invalid.");
-      return;
-    }
-    try {
-      await FoloosiPlugins.init(json.encode({
-        "merchantKey": foloosiModel.value.merchantKey,
-        "customColor": "#1E8449",
-      }));
-
-      FoloosiPlugins.setLogVisible(true);
-
-      final paymentData = {
-        "orderId": "ORD${Constant.getUuid()}",
-        "orderDescription": paymentDesc,
-        "orderAmount": double.parse(amount),
-        "country": "ARE",
-        "currencyCode": "AED",
-        "customer": {
-          "name": userModel.value.fullName,
-          "email": userModel.value.email,
-          "mobile": userModel.value.phoneNumber,
-        },
-      };
-
-      final result = await FoloosiPlugins.makePayment(json.encode(paymentData));
-
-      if (result != null) {
-        ShowToastDialog.showToast("Payment Successful!!");
-        walletTopUp();
-      }
-    } catch (e) {
-      ShowToastDialog.showToast("Payment UnSuccessful!!");
-    }
-  }
+  // Future<void> makeFoloosiPayment({required String amount, required String paymentDesc}) async {
+  //   if (foloosiModel.value.merchantKey == '' || foloosiModel.value.merchantKey?.isEmpty == true) {
+  //     ShowToastDialog.showToast("Foloosi merchant key is missing or invalid.");
+  //     return;
+  //   }
+  //   try {
+  //     await FoloosiPlugins.init(json.encode({
+  //       "merchantKey": foloosiModel.value.merchantKey,
+  //       "customColor": "#1E8449",
+  //     }));
+  //
+  //     FoloosiPlugins.setLogVisible(true);
+  //
+  //     final paymentData = {
+  //       "orderId": "ORD${Constant.getUuid()}",
+  //       "orderDescription": paymentDesc,
+  //       "orderAmount": double.parse(amount),
+  //       "country": "ARE",
+  //       "currencyCode": "AED",
+  //       "customer": {
+  //         "name": userModel.value.fullName,
+  //         "email": userModel.value.email,
+  //         "mobile": userModel.value.phoneNumber,
+  //       },
+  //     };
+  //
+  //     final result = await FoloosiPlugins.makePayment(json.encode(paymentData));
+  //
+  //     if (result != null) {
+  //       ShowToastDialog.showToast("Payment Successful!!");
+  //       walletTopUp();
+  //     }
+  //   } catch (e) {
+  //     ShowToastDialog.showToast("Payment UnSuccessful!!");
+  //   }
+  // }
 
   Future<void> makePayMongoPayment({required String amount, required String paymentDesc}) async {
     try {

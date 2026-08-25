@@ -96,7 +96,7 @@ dependencies:
   razorpay_flutter: ^1.4.5
   flutter_paypal: ^0.2.1
   # google_mlkit_translation: ^0.13.1
-  foloosi_plugins: ^1.1.0
+  # foloosi_plugins: ^1.1.0
   phonepe_payment_sdk: ^3.0.2
   change_app_package_name: ^1.5.0
   # paytm_allinonesdk: ^1.2.8
