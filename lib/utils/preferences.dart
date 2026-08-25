@@ -30,6 +30,7 @@ class Preferences {
   static const orderRingtone = "audioSound";
 
   static const isClickOnNotification = "isClickOnNotification";
+  static const backgroundLocationDisclosureAccepted = "backgroundLocationDisclosureAccepted";
 
   static late SharedPreferences pref;
 

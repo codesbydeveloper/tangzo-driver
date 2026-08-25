@@ -332,5 +332,9 @@ const Map<String, String> enUS = {
   'Please upload a valid': 'Please upload a valid',
   "We won't test this payment method right now, due to unverified credentials, but payment method will be work with correct credentilas and if is there any issue then payment method will return this error.":
       "We won't test this payment method right now, due to unverified credentials, but payment method will be work with correct credentilas and if is there any issue then payment method will return this error.",
-  "Something want wrong please contact administrator": "Something want wrong please contact administrator"
+  "Something want wrong please contact administrator": "Something want wrong please contact administrator",
+  'Location access required': 'Location access required',
+  'Tangzo Driver collects location data to enable delivery features even when the app is closed or not in use. This includes assigning nearby delivery requests and sharing your live location with restaurants and customers during active deliveries.\n\nYour location is used only for delivery operations and is not sold for advertising.':
+      'Tangzo Driver collects location data to enable delivery features even when the app is closed or not in use. This includes assigning nearby delivery requests and sharing your live location with restaurants and customers during active deliveries.\n\nYour location is used only for delivery operations and is not sold for advertising.',
+  'Deny': 'Deny',
 };

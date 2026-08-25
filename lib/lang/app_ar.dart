@@ -323,5 +323,9 @@ const Map<String, String> lnAr = {
       "لن نقوم باختبار طريقة الدفع هذه الآن بسبب عدم التحقق من بيانات الاعتماد، ولكن ستعمل طريقة الدفع بشكل صحيح عند إدخال بيانات اعتماد صحيحة، وإذا كانت هناك أي مشكلة فستُرجع طريقة الدفع هذا الخطأ.",
   "Something want wrong please contact administrator": "حدث خطأ ما، يرجى الاتصال بمسؤول النظام.",
   "Unable to initialize payment, credentials are invalid or not authorized.Please check credentials, environment (sandbox/live), and account region.":
-      "تعذّر تهيئة الدفع، بيانات الاعتماد غير صالحة أو غير مخوّلة. يرجى التحقق من بيانات الاعتماد، والبيئة (تجريبية/حقيقية)، ومنطقة الحساب."
+      "تعذّر تهيئة الدفع، بيانات الاعتماد غير صالحة أو غير مخوّلة. يرجى التحقق من بيانات الاعتماد، والبيئة (تجريبية/حقيقية)، ومنطقة الحساب.",
+  'Location access required': 'مطلوب الوصول إلى الموقع',
+  'Tangzo Driver collects location data to enable delivery features even when the app is closed or not in use. This includes assigning nearby delivery requests and sharing your live location with restaurants and customers during active deliveries.\n\nYour location is used only for delivery operations and is not sold for advertising.':
+      'يجمع تطبيق Tangzo Driver بيانات الموقع لتفعيل ميزات التوصيل حتى عندما يكون التطبيق مغلقاً أو غير قيد الاستخدام. يشمل ذلك تعيين طلبات التوصيل القريبة ومشاركة موقعك المباشر مع المطاعم والعملاء أثناء عمليات التوصيل النشطة.\n\nيُستخدم موقعك فقط لعمليات التوصيل ولا يُباع لأغراض الإعلان.',
+  'Deny': 'رفض',
 };

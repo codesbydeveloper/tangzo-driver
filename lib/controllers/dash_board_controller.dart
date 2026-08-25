@@ -8,6 +8,8 @@ import 'package:driver/models/order_model.dart';
 import 'package:driver/models/user_model.dart';
 import 'package:driver/utils/fire_store_utils.dart';
 import 'package:driver/utils/preferences.dart';
+import 'package:driver/widget/location_disclosure_dialog.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:location/location.dart';
 
@@ -30,6 +32,8 @@ class DashBoardController extends GetxController {
   RxBool canPopNow = false.obs;
 
   Future<void> getUser() async {
+    // Wait for UI so the prominent disclosure dialog can present.
+    await SchedulerBinding.instance.endOfFrame;
     await updateCurrentLocation();
     FireStoreUtils.fireStore.collection(CollectionName.users).doc(FireStoreUtils.getCurrentUid()).snapshots().listen(
       (event) {
@@ -89,51 +93,46 @@ class DashBoardController extends GetxController {
 
   Future<void> updateCurrentLocation() async {
     try {
-      PermissionStatus permissionStatus = await location.hasPermission();
-      if (permissionStatus == PermissionStatus.granted) {
-        location.enableBackgroundMode(enable: true);
-        location.changeSettings(accuracy: LocationAccuracy.high, distanceFilter: double.parse(Constant.driverLocationUpdate));
+      // Google Play: show prominent disclosure before any background-location access.
+      final consented = await LocationDisclosureDialog.ensureConsent();
+      if (!consented) {
+        ShowToastDialog.closeLoader();
+        return;
+      }
 
-        location.onLocationChanged.listen((locationData) async {
-          Constant.locationDataFinal = locationData;
-          await FireStoreUtils.getUserProfile(FireStoreUtils.getCurrentUid()).then((value) async {
-            if (value != null) {
-              userModel.value = value;
-              if (userModel.value.isActive == true) {
-                userModel.value.location = UserLocation(latitude: locationData.latitude ?? 0.0, longitude: locationData.longitude ?? 0.0);
-                userModel.value.rotation = locationData.heading;
-                await FireStoreUtils.updateUser(userModel.value);
-              }
-            }
-          });
-        });
+      PermissionStatus permissionStatus = await location.hasPermission();
+      if (permissionStatus == PermissionStatus.denied) {
+        permissionStatus = await location.requestPermission();
+      }
+
+      if (permissionStatus == PermissionStatus.granted) {
+        await _startBackgroundLocationUpdates();
       } else {
-        location.requestPermission().then((permissionStatus) {
-          if (permissionStatus == PermissionStatus.granted) {
-            location.enableBackgroundMode(enable: true);
-            location.changeSettings(accuracy: LocationAccuracy.high, distanceFilter: double.parse(Constant.driverLocationUpdate));
-            location.onLocationChanged.listen((locationData) async {
-              log("locationData :: 22 :: ${locationData.latitude} :: ${locationData.longitude}");
-              Constant.locationDataFinal = locationData;
-              await FireStoreUtils.getUserProfile(FireStoreUtils.getCurrentUid()).then((value) async {
-                if (value != null) {
-                  userModel.value = value;
-                  if (userModel.value.isActive == true) {
-                    userModel.value.location = UserLocation(latitude: locationData.latitude ?? 0.0, longitude: locationData.longitude ?? 0.0);
-                    userModel.value.rotation = locationData.heading;
-                    await FireStoreUtils.updateUser(userModel.value);
-                  }
-                  ShowToastDialog.closeLoader();
-                }
-              });
-            });
-          } else {
-            ShowToastDialog.closeLoader();
-          }
-        });
+        ShowToastDialog.closeLoader();
       }
     } catch (e) {
       print(e);
     }
+  }
+
+  Future<void> _startBackgroundLocationUpdates() async {
+    location.enableBackgroundMode(enable: true);
+    location.changeSettings(accuracy: LocationAccuracy.high, distanceFilter: double.parse(Constant.driverLocationUpdate));
+
+    location.onLocationChanged.listen((locationData) async {
+      log("locationData :: ${locationData.latitude} :: ${locationData.longitude}");
+      Constant.locationDataFinal = locationData;
+      await FireStoreUtils.getUserProfile(FireStoreUtils.getCurrentUid()).then((value) async {
+        if (value != null) {
+          userModel.value = value;
+          if (userModel.value.isActive == true) {
+            userModel.value.location = UserLocation(latitude: locationData.latitude ?? 0.0, longitude: locationData.longitude ?? 0.0);
+            userModel.value.rotation = locationData.heading;
+            await FireStoreUtils.updateUser(userModel.value);
+          }
+          ShowToastDialog.closeLoader();
+        }
+      });
+    });
   }
 }
