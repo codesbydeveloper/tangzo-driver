@@ -58,7 +58,9 @@ class DashBoardScreen extends StatelessWidget {
                     ),
                   ),
                   TranslatedText(
-                    Constant.userModel!.fullName(),
+                    controller.userModel.value.fullName().trim().isNotEmpty
+                        ? controller.userModel.value.fullName()
+                        : (Constant.userModel?.fullName() ?? ''),
                     style: TextStyle(
                       color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey900,
                       fontSize: 14,

@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart' hide Constant;
 import 'package:driver/constant/collection_name.dart';
@@ -32,9 +33,7 @@ class DashBoardController extends GetxController {
   RxBool canPopNow = false.obs;
 
   Future<void> getUser() async {
-    // Wait for UI so the prominent disclosure dialog can present.
-    await SchedulerBinding.instance.endOfFrame;
-    await updateCurrentLocation();
+    // Load user profile first so the UI is not blocked by location consent.
     FireStoreUtils.fireStore.collection(CollectionName.users).doc(FireStoreUtils.getCurrentUid()).snapshots().listen(
       (event) {
         if (event.exists) {
@@ -43,6 +42,14 @@ class DashBoardController extends GetxController {
         }
       },
     );
+
+    // Defer location until after the dashboard has finished building.
+    // Showing a dialog during GetX init caused deep rebuild / stack overflow on iPad.
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        updateCurrentLocation();
+      });
+    });
   }
 
   RxString isDarkMode = "Light".obs;
@@ -90,14 +97,17 @@ class DashBoardController extends GetxController {
   }
 
   Location location = Location();
+  bool _locationListening = false;
 
   Future<void> updateCurrentLocation() async {
     try {
-      // Google Play: show prominent disclosure before any background-location access.
-      final consented = await LocationDisclosureDialog.ensureConsent();
-      if (!consented) {
-        ShowToastDialog.closeLoader();
-        return;
+      // Google Play prominent disclosure — Android only.
+      if (Platform.isAndroid) {
+        final consented = await LocationDisclosureDialog.ensureConsent();
+        if (!consented) {
+          ShowToastDialog.closeLoader();
+          return;
+        }
       }
 
       PermissionStatus permissionStatus = await location.hasPermission();
@@ -111,13 +121,29 @@ class DashBoardController extends GetxController {
         ShowToastDialog.closeLoader();
       }
     } catch (e) {
-      print(e);
+      log('updateCurrentLocation error: $e');
+      ShowToastDialog.closeLoader();
     }
   }
 
   Future<void> _startBackgroundLocationUpdates() async {
-    location.enableBackgroundMode(enable: true);
-    location.changeSettings(accuracy: LocationAccuracy.high, distanceFilter: double.parse(Constant.driverLocationUpdate));
+    if (_locationListening) {
+      return;
+    }
+    _locationListening = true;
+
+    try {
+      await location.enableBackgroundMode(enable: true);
+    } catch (e) {
+      // Background mode can fail on some iOS simulators / configs; continue with foreground updates.
+      log('enableBackgroundMode failed: $e');
+    }
+
+    try {
+      location.changeSettings(accuracy: LocationAccuracy.high, distanceFilter: double.parse(Constant.driverLocationUpdate));
+    } catch (e) {
+      log('changeSettings failed: $e');
+    }
 
     location.onLocationChanged.listen((locationData) async {
       log("locationData :: ${locationData.latitude} :: ${locationData.longitude}");
