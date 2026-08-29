@@ -51,12 +51,17 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCKEpbC7OxzWyFSkwAjT6Ue8RqisTN4WR8',
-    appId: '1:728732933030:android:414b367763282585418d67',
+    appId: '1:728732933030:android:1f040889c8721df9418d67',
     messagingSenderId: '728732933030',
     projectId: 'tangzo-apps',
     databaseURL: 'https://tangzo-apps-default-rtdb.firebaseio.com',
     storageBucket: 'tangzo-apps.firebasestorage.app',
   );
+
+  /// Web OAuth client ID (client_type 3) from google-services.json — required for
+  /// Google Sign-In idToken on Android release / Play Store builds.
+  static const String googleSignInWebClientId =
+      '728732933030-060cg97kmedeo6hbb84ocgms5e4lo267.apps.googleusercontent.com';
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCx_Z27vjO3P36Bm2JFZYfo1dXwamIMMGg',

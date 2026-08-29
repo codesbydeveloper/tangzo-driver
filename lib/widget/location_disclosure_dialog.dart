@@ -1,39 +1,32 @@
-import 'dart:io';
-
 import 'package:driver/themes/app_them_data.dart';
 import 'package:driver/themes/responsive.dart';
+import 'package:driver/utils/dark_theme_provider.dart';
 import 'package:driver/utils/preferences.dart';
 import 'package:driver/widget/translated_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
-/// Google Play prominent disclosure for ACCESS_BACKGROUND_LOCATION (Android only).
+/// Google Play prominent disclosure for ACCESS_BACKGROUND_LOCATION.
 /// Must be shown in-app and accepted before enabling background location.
 class LocationDisclosureDialog extends StatelessWidget {
   const LocationDisclosureDialog({super.key});
 
   /// Returns true only after the user taps Accept.
-  /// On iOS this always returns true (Play policy does not apply).
   static Future<bool> ensureConsent() async {
-    if (!Platform.isAndroid) {
-      return true;
-    }
-
     if (Preferences.getBoolean(Preferences.backgroundLocationDisclosureAccepted)) {
       return true;
     }
 
-    // Wait until the navigator/route is fully idle to avoid rebuild recursion.
-    await Future<void>.delayed(Duration.zero);
-    await WidgetsBinding.instance.endOfFrame;
-
-    if (Get.context == null || (Get.isDialogOpen ?? false)) {
+    final context = Get.context;
+    if (context == null) {
       return false;
     }
 
-    final accepted = await Get.dialog<bool>(
-      const LocationDisclosureDialog(),
+    final accepted = await showDialog<bool>(
+      context: context,
       barrierDismissible: false,
+      builder: (context) => const LocationDisclosureDialog(),
     );
 
     if (accepted == true) {
@@ -45,7 +38,8 @@ class LocationDisclosureDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeChange = Provider.of<DarkThemeProvider>(context);
+    final isDark = themeChange.getThem();
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -96,7 +90,7 @@ class LocationDisclosureDialog extends StatelessWidget {
               children: [
                 Expanded(
                   child: InkWell(
-                    onTap: () => Get.back(result: false),
+                    onTap: () => Navigator.of(context).pop(false),
                     child: Container(
                       height: Responsive.height(5, context),
                       decoration: ShapeDecoration(
@@ -121,7 +115,7 @@ class LocationDisclosureDialog extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: InkWell(
-                    onTap: () => Get.back(result: true),
+                    onTap: () => Navigator.of(context).pop(true),
                     child: Container(
                       height: Responsive.height(5, context),
                       decoration: ShapeDecoration(

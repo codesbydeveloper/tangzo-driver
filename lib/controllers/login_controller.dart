@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:driver/firebase_options.dart';
 import 'package:driver/app/auth_screen/signup_screen.dart';
 import 'package:driver/app/dash_board_screen/dash_board_screen.dart';
 import 'package:driver/constant/constant.dart';
@@ -16,6 +17,8 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 class LoginController extends GetxController {
   Rx<TextEditingController> emailEditingController = TextEditingController().obs;
   Rx<TextEditingController> passwordEditingController = TextEditingController().obs;
+  static const List<String> _googleScopes = ['email', 'profile'];
+  static bool _googleSignInInitialized = false;
 
   RxBool passwordVisible = true.obs;
 
@@ -60,58 +63,68 @@ class LoginController extends GetxController {
   }
 
   Future<void> loginWithGoogle() async {
+    // Do not show a blocking loader before Google Sign-In — the EasyLoading mask cancels the account picker on Android.
+    final value = await signInWithGoogle();
+    if (value == null) {
+      return;
+    }
+
     ShowToastDialog.showLoader("please wait...");
-    await signInWithGoogle().then((value) async {
-      ShowToastDialog.closeLoader();
-      if (value != null) {
-        if (value.additionalUserInfo!.isNewUser) {
+    try{
+      if (value.additionalUserInfo!.isNewUser) {
+        UserModel userModel = UserModel();
+        userModel.id = value.user!.uid;
+        userModel.email = value.user!.email;
+        userModel.firstName = value.user!.displayName?.split(' ').first;
+        userModel.lastName = value.user!.displayName?.split(' ').last;
+        userModel.provider = 'google';
+
+        Get.off(const SignupScreen(), arguments: {
+          "userModel": userModel,
+          "type": "google",
+        });
+      } else {
+        final userExit = await FireStoreUtils.userExistOrNot(value.user!.uid);
+        if (userExit == true) {
+          UserModel? userModel = await FireStoreUtils.getUserProfile(
+              value.user!.uid);
+          if (userModel != null && userModel.role == Constant.userRoleDriver) {
+            if (userModel.active == true) {
+              userModel.fcmToken = await NotificationService.getToken();
+              await FireStoreUtils.updateUser(userModel);
+              Get.offAll(const DashBoardScreen());
+            } else {
+              await FirebaseAuth.instance.signOut();
+              ShowToastDialog.showToast(
+                  "This user is disable please contact to administrator");
+            }
+          } else {
+            await FirebaseAuth.instance.signOut();
+            // ShowToastDialog.showToast("This user is disable please contact to administrator");
+          }
+        } else {
           UserModel userModel = UserModel();
           userModel.id = value.user!.uid;
           userModel.email = value.user!.email;
-          userModel.firstName = value.user!.displayName?.split(' ').first;
-          userModel.lastName = value.user!.displayName?.split(' ').last;
+          userModel.firstName = value.user!
+              .displayName
+              ?.split(' ')
+              .first;
+          userModel.lastName = value.user!
+              .displayName
+              ?.split(' ')
+              .last;
           userModel.provider = 'google';
 
-          ShowToastDialog.closeLoader();
           Get.off(const SignupScreen(), arguments: {
             "userModel": userModel,
             "type": "google",
           });
-        } else {
-          await FireStoreUtils.userExistOrNot(value.user!.uid).then((userExit) async {
-            ShowToastDialog.closeLoader();
-            if (userExit == true) {
-              UserModel? userModel = await FireStoreUtils.getUserProfile(value.user!.uid);
-              if (userModel != null && userModel.role == Constant.userRoleDriver) {
-                if (userModel.active == true) {
-                  userModel.fcmToken = await NotificationService.getToken();
-                  await FireStoreUtils.updateUser(userModel);
-                  Get.offAll(const DashBoardScreen());
-                } else {
-                  await FirebaseAuth.instance.signOut();
-                  ShowToastDialog.showToast("This user is disable please contact to administrator");
-                }
-              } else {
-                await FirebaseAuth.instance.signOut();
-                // ShowToastDialog.showToast("This user is disable please contact to administrator");
-              }
-            } else {
-              UserModel userModel = UserModel();
-              userModel.id = value.user!.uid;
-              userModel.email = value.user!.email;
-              userModel.firstName = value.user!.displayName?.split(' ').first;
-              userModel.lastName = value.user!.displayName?.split(' ').last;
-              userModel.provider = 'google';
-
-              Get.off(const SignupScreen(), arguments: {
-                "userModel": userModel,
-                "type": "google",
-              });
-            }
-          });
         }
       }
-    });
+    } finally {
+      ShowToastDialog.closeLoader();
+    }
   }
 
   Future<void> loginWithApple() async {
@@ -176,9 +189,19 @@ class LoginController extends GetxController {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn.instance;
 
-      await googleSignIn.initialize();
+      if (!_googleSignInInitialized) {
+        await googleSignIn.initialize(
+          serverClientId: DefaultFirebaseOptions.googleSignInWebClientId,
+        );
+        _googleSignInInitialized = true;
+      }
 
-      final GoogleSignInAccount googleUser = await googleSignIn.authenticate();
+      // Clears Credential Manager cache — fixes "[16] Account reauth failed" on Play builds.
+      await googleSignIn.signOut();
+
+      final GoogleSignInAccount googleUser = await googleSignIn.authenticate(
+        scopeHint: _googleScopes,
+      );
       if (googleUser.id.isEmpty) return null;
 
       final email = googleUser.email;
@@ -186,18 +209,22 @@ class LoginController extends GetxController {
       UserModel? userModel = await FireStoreUtils.getUserByEmail(email);
 
       if (userModel?.provider != "google" && userModel?.provider != "apple" && userModel?.provider != null) {
-        ShowToastDialog.closeLoader();
         ShowToastDialog.showToast("The account already exists for that email.");
         return null;
       }
 
       if ((userModel?.provider == "google" || userModel?.provider == "apple") && userModel?.role != Constant.userRoleDriver) {
-        ShowToastDialog.closeLoader();
         ShowToastDialog.showToast("The account already exists for that email.");
         return null;
       }
 
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      if (googleAuth.idToken == null || googleAuth.idToken!.isEmpty) {
+        debugPrint('Google Sign-In Error: idToken is null — check serverClientId and Firebase SHA-1 fingerprints.');
+        ShowToastDialog.showToast("Google sign-in configuration error. Please try again later.");
+        return null;
+      }
 
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
@@ -205,8 +232,17 @@ class LoginController extends GetxController {
       final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
 
       return userCredential;
+    } on GoogleSignInException catch (e) {
+      debugPrint("Google Sign-In Error: $e");
+      if (e.code != GoogleSignInExceptionCode.canceled) {
+        ShowToastDialog.showToast("Google sign-in failed. Please try again.");
+      } else if (e.toString().contains('Account reauth failed')) {
+        // ApiException 16 — almost always Play App Signing SHA-1 missing in Firebase/GCP.
+        ShowToastDialog.showToast("Google sign-in failed. App signing certificate may not be registered in Firebase.");
+      }
+      return null;
     } catch (e) {
-      print("Google Sign-In Error: $e");
+      debugPrint("Google Sign-In Error: $e");
       return null;
     }
   }
