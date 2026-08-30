@@ -1,15 +1,16 @@
 plugins {
     id "com.android.application"
     // START: FlutterFire Configuration
-    id 'com.google.gms.google-services'
+    id "com.google.gms.google-services"
     // END: FlutterFire Configuration
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin plugins.
     id "dev.flutter.flutter-gradle-plugin"
 }
 
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file("local.properties")
+
 if (localPropertiesFile.exists()) {
     localPropertiesFile.withReader("UTF-8") { reader ->
         localProperties.load(reader)
@@ -17,13 +18,27 @@ if (localPropertiesFile.exists()) {
 }
 
 def flutterVersionCode = localProperties.getProperty("flutter.versionCode")
+
 if (flutterVersionCode == null) {
     flutterVersionCode = "1"
 }
 
 def flutterVersionName = localProperties.getProperty("flutter.versionName")
+
 if (flutterVersionName == null) {
     flutterVersionName = "1.0"
+}
+
+
+// ============================================================
+// RELEASE KEYSTORE
+// ============================================================
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
 
@@ -33,34 +48,37 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11 // Use VERSION_17 for now
+        sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
         coreLibraryDesugaringEnabled true
     }
     kotlinOptions {
-        jvmTarget = "11" // Kotlin's maximum JVM target is 20, so use a supported version
+        jvmTarget = "11"
     }
 
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.tangzo.driver"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
-        versionCode = 9
+
+        versionCode = 10
         versionName = flutterVersionName
-        // Ship ARM ABIs only. x86_64 libs from payment SDKs (card.io/opencv)
-        // are 4 KB-aligned and fail Google Play 16 KB page-size checks.
+
+        // Ship ARM ABIs only.
+        // x86_64 libs from payment SDKs are excluded
+        // because of Google Play 16 KB page-size requirements.
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"
         }
     }
 
+
     packaging {
         jniLibs {
             useLegacyPackaging = false
+
             excludes += [
                     "lib/x86_64/libcardioDecider.so",
                     "lib/x86_64/libcardioRecognizer.so",
@@ -72,15 +90,39 @@ android {
     }
 
 
-    buildTypes {
+    // ============================================================
+    // SIGNING CONFIGURATION
+    // ============================================================
+
+    signingConfigs {
+
         release {
-            minifyEnabled false  // Disable minification
-            shrinkResources false  // Disable shrinking resources
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+
+            storeFile keystoreProperties['storeFile'] ?
+                    file(keystoreProperties['storeFile']) :
+                    null
+
+            storePassword keystoreProperties['storePassword']
         }
     }
+
+
+    // ============================================================
+    // BUILD TYPES
+    // ============================================================
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+
+            // Use the Driver release keystore.
+            signingConfig signingConfigs.release
+        }
+    }
+
     configurations.all {
         resolutionStrategy {
             force 'androidx.core:core-ktx:1.13.1'

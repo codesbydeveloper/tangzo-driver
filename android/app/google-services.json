@@ -23,6 +23,30 @@
           }
         },
         {
+          "client_id": "728732933030-gv8tdtrbltcs381hdlfuori0459n06be.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tangzo.customer",
+            "certificate_hash": "2ad9d5040159a010eb5e69ea8f74682fbdb751e8"
+          }
+        },
+        {
+          "client_id": "728732933030-j5grn54bchnmuukg2h8mqg372heltngf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tangzo.customer",
+            "certificate_hash": "b2edd3084f5bbd2b10cb061f812eb8dd929dc2f6"
+          }
+        },
+        {
+          "client_id": "728732933030-rs2l52g7s365lvgd280j9klphjmkj2vj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tangzo.customer",
+            "certificate_hash": "717077acac3f020755d6a16f347bcdeba6b23919"
+          }
+        },
+        {
           "client_id": "728732933030-060cg97kmedeo6hbb84ocgms5e4lo267.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -58,6 +82,30 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "728732933030-cegofcsg8r96k9erehs91j3iei77hoel.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tangzo.driver",
+            "certificate_hash": "b2edd3084f5bbd2b10cb061f812eb8dd929dc2f6"
+          }
+        },
+        {
+          "client_id": "728732933030-f8rtsiahjmeo8ndfab2c8ne15jqcolts.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tangzo.driver",
+            "certificate_hash": "e4fada6835c043cdd7d7971dcde959ab75f90a41"
+          }
+        },
+        {
+          "client_id": "728732933030-kr6rs3cejksoe56g2s5jl2af4hvk1rog.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tangzo.driver",
+            "certificate_hash": "fe6aeac4f3541b0ffb5100eb522455a0fbeef8ef"
+          }
+        },
         {
           "client_id": "728732933030-p2u3i31ti0orcp2jup0i46r5kmkhhqer.apps.googleusercontent.com",
           "client_type": 1,
