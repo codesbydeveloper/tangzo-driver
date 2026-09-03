@@ -80,14 +80,14 @@ class SignupController extends GetxController {
       userModel.value.phoneNumber = phoneNUmberEditingController.value.text.toString();
       userModel.value.role = Constant.userRoleDriver;
       userModel.value.fcmToken = await NotificationService.getToken();
-      userModel.value.active = Constant.autoApproveDriver == true ? true : false;
-      userModel.value.isDocumentVerify = Constant.isDriverVerification == true ? false : true;
+      userModel.value.active = false;
+      userModel.value.isDocumentVerify = false;
       userModel.value.countryCode = countryCodeEditingController.value.text;
       userModel.value.countryISOCode = countryISOCodeEditingController.value.text;
       userModel.value.createdAt = Timestamp.now();
       userModel.value.zoneId = selectedZone.value.id;
       userModel.value.appIdentifier = Platform.isAndroid ? 'android' : 'ios';
-      userModel.value.isAutoVerify = Constant.isDriverVerification == true ? false : true;
+      userModel.value.isAutoVerify = false;
 
       await FireStoreUtils.updateUser(userModel.value).then(
         (value) {
@@ -119,15 +119,15 @@ class SignupController extends GetxController {
           userModel.value.phoneNumber = phoneNUmberEditingController.value.text.toString();
           userModel.value.role = Constant.userRoleDriver;
           userModel.value.fcmToken = await NotificationService.getToken();
-          userModel.value.active = Constant.autoApproveDriver == true ? true : false;
-          userModel.value.isDocumentVerify = Constant.isDriverVerification == true ? false : true;
+          userModel.value.active = false;
+          userModel.value.isDocumentVerify = false;
           userModel.value.countryCode = countryCodeEditingController.value.text;
           userModel.value.countryISOCode = countryISOCodeEditingController.value.text;
           userModel.value.createdAt = Timestamp.now();
           userModel.value.zoneId = selectedZone.value.id;
           userModel.value.appIdentifier = Platform.isAndroid ? 'android' : 'ios';
           userModel.value.provider = type.value == "whatsapp" ? 'whatsapp' : 'email';
-          userModel.value.isAutoVerify = Constant.isDriverVerification == true ? false : true;
+          userModel.value.isAutoVerify = false;
 
           await FireStoreUtils.updateUser(userModel.value).then(
             (value) async {
