@@ -133,13 +133,21 @@ class NotificationService {
     log('Message data: ${message.notification!.body.toString()}');
     try {
       AndroidNotificationChannel channel = const AndroidNotificationChannel(
-        '0',
-        'foodie-customer',
-        description: 'Show QuickLAI Notification',
+        'high_importance_channel',
+        'Tangzo Driver Notifications',
+        description: 'Tangzo driver order and chat notifications',
         importance: Importance.max,
       );
-      AndroidNotificationDetails notificationDetails =
-          AndroidNotificationDetails(channel.id, channel.name, channelDescription: 'your channel Description', importance: Importance.high, priority: Priority.high, ticker: 'ticker');
+      AndroidNotificationDetails notificationDetails = AndroidNotificationDetails(
+        channel.id,
+        channel.name,
+        channelDescription: channel.description,
+        importance: Importance.high,
+        priority: Priority.high,
+        ticker: 'ticker',
+        icon: '@mipmap/launcher_icon',
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
+      );
       const DarwinNotificationDetails darwinNotificationDetails = DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true);
       NotificationDetails notificationDetailsBoth = NotificationDetails(android: notificationDetails, iOS: darwinNotificationDetails);
       await FlutterLocalNotificationsPlugin().show(
