@@ -320,92 +320,95 @@ class SignupScreen extends StatelessWidget {
                 ),
               ),
             ),
-            bottomNavigationBar: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ValueListenableBuilder(
-                        valueListenable: TranslationNotifier.refresh,
-                        builder: (_, __, ___) {
-                          return Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                    text: 'Log in with'.tr,
-                                    style: TextStyle(
-                                      color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey900,
-                                      fontFamily: AppThemeData.medium,
-                                      fontWeight: FontWeight.w500,
-                                    )),
-                                const WidgetSpan(
-                                    child: SizedBox(
-                                  width: 10,
-                                )),
-                                TextSpan(
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () {
-                                        Get.to(const PhoneNumberScreen());
-                                      },
-                                    text: 'Mobile Number'.tr,
-                                    style: const TextStyle(
-                                        color: AppThemeData.secondary300,
+            bottomNavigationBar: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ValueListenableBuilder(
+                          valueListenable: TranslationNotifier.refresh,
+                          builder: (_, __, ___) {
+                            return Text.rich(
+                              textAlign: TextAlign.center,
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                      text: 'Log in with'.tr,
+                                      style: TextStyle(
+                                        color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey900,
                                         fontFamily: AppThemeData.medium,
                                         fontWeight: FontWeight.w500,
-                                        decoration: TextDecoration.underline,
-                                        decorationColor: AppThemeData.secondary300)),
-                              ],
-                            ),
-                          );
-                        }),
-                  ],
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                InkWell(
-                  onTap: () {
-                    if (controller.type.value == "google" || controller.type.value == "apple" || controller.type.value == "mobileNumber") {
-                      if (controller.firstNameEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter first name");
-                      } else if (controller.lastNameEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter last name");
-                      } else if (controller.emailEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter valid email");
-                      } else if (controller.phoneNUmberEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter Phone number");
-                      } else if (controller.selectedZone.value.id == null) {
-                        ShowToastDialog.showToast("Please select zone");
+                                      )),
+                                  const WidgetSpan(
+                                      child: SizedBox(
+                                    width: 10,
+                                  )),
+                                  TextSpan(
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () {
+                                          Get.to(const PhoneNumberScreen());
+                                        },
+                                      text: 'Mobile Number'.tr,
+                                      style: const TextStyle(
+                                          color: AppThemeData.secondary300,
+                                          fontFamily: AppThemeData.medium,
+                                          fontWeight: FontWeight.w500,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: AppThemeData.secondary300)),
+                                ],
+                              ),
+                            );
+                          }),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  InkWell(
+                    onTap: () {
+                      if (controller.type.value == "google" || controller.type.value == "apple" || controller.type.value == "mobileNumber") {
+                        if (controller.firstNameEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter first name");
+                        } else if (controller.lastNameEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter last name");
+                        } else if (controller.emailEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter valid email");
+                        } else if (controller.phoneNUmberEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter Phone number");
+                        } else if (controller.selectedZone.value.id == null) {
+                          ShowToastDialog.showToast("Please select zone");
+                        } else {
+                          controller.signUpWithEmailAndPassword();
+                        }
                       } else {
-                        controller.signUpWithEmailAndPassword();
+                        if (controller.firstNameEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter first name");
+                        } else if (controller.lastNameEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter last name");
+                        } else if (controller.emailEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter valid email");
+                        } else if (controller.phoneNUmberEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter Phone number");
+                        } else if (controller.passwordEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter password");
+                        } else if (controller.conformPasswordEditingController.value.text.isEmpty) {
+                          ShowToastDialog.showToast("Please enter Confirm password");
+                        } else if (controller.passwordEditingController.value.text != controller.conformPasswordEditingController.value.text) {
+                          ShowToastDialog.showToast("Password and Confirm password doesn't match");
+                        } else if (controller.selectedZone.value.id == null) {
+                          ShowToastDialog.showToast("Please select zone");
+                        } else {
+                          controller.signUpWithEmailAndPassword();
+                        }
                       }
-                    } else {
-                      if (controller.firstNameEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter first name");
-                      } else if (controller.lastNameEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter last name");
-                      } else if (controller.emailEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter valid email");
-                      } else if (controller.phoneNUmberEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter Phone number");
-                      } else if (controller.passwordEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter password");
-                      } else if (controller.conformPasswordEditingController.value.text.isEmpty) {
-                        ShowToastDialog.showToast("Please enter Confirm password");
-                      } else if (controller.passwordEditingController.value.text != controller.conformPasswordEditingController.value.text) {
-                        ShowToastDialog.showToast("Password and Confirm password doesn't match");
-                      } else if (controller.selectedZone.value.id == null) {
-                        ShowToastDialog.showToast("Please select zone");
-                      } else {
-                        controller.signUpWithEmailAndPassword();
-                      }
-                    }
-                  },
-                  child: Container(
-                    color: AppThemeData.driverApp300,
-                    width: Responsive.width(100, context),
-                    child: Padding(
+                    },
+                    child: Container(
+                      color: AppThemeData.driverApp300,
+                      width: Responsive.width(100, context),
+                      alignment: Alignment.center,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: TranslatedText(
                         "Sign up",
@@ -419,8 +422,8 @@ class SignupScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         });

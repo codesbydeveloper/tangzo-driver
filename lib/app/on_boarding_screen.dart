@@ -146,29 +146,32 @@ class OnBoardingScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-          bottomNavigationBar: InkWell(
-            onTap: () {
-              if (controller.selectedPageIndex.value == 2) {
-                Preferences.setBoolean(Preferences.isFinishOnBoardingKey, true);
-                Get.offAll(
-                  const LoginScreen(),
-                  transition: Transition.fadeIn,
-                  duration: const Duration(milliseconds: 450),
-                );
-              } else {
-                controller.pageController.animateToPage(
-                  controller.selectedPageIndex.value + 1,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
-              }
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              color: controller.selectedPageIndex.value == 2 ? AppThemeData.driverApp300 : AppThemeData.grey900,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: InkWell(
+              onTap: () {
+                if (controller.selectedPageIndex.value == 2) {
+                  Preferences.setBoolean(Preferences.isFinishOnBoardingKey, true);
+                  Get.offAll(
+                    const LoginScreen(),
+                    transition: Transition.fadeIn,
+                    duration: const Duration(milliseconds: 450),
+                  );
+                } else {
+                  controller.pageController.animateToPage(
+                    controller.selectedPageIndex.value + 1,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut,
+                  );
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                width: double.infinity,
+                alignment: Alignment.center,
+                color: controller.selectedPageIndex.value == 2 ? AppThemeData.driverApp300 : AppThemeData.grey900,
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   child: TranslatedText(

@@ -119,62 +119,65 @@ class PhoneNumberScreen extends StatelessWidget {
                 ],
               ),
             ),
-            bottomNavigationBar: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: Platform.isAndroid ? 10 : 30),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ValueListenableBuilder(
-                          valueListenable: TranslationNotifier.refresh,
-                          builder: (_, __, ___) {
-                            return Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                      text: 'Log in with'.tr,
-                                      style: TextStyle(
-                                        color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey900,
-                                        fontFamily: AppThemeData.medium,
-                                        fontWeight: FontWeight.w500,
-                                      )),
-                                  const WidgetSpan(
-                                      child: SizedBox(
-                                    width: 10,
-                                  )),
-                                  TextSpan(
-                                      recognizer: TapGestureRecognizer()
-                                        ..onTap = () {
-                                          Get.offAll(const LoginScreen());
-                                        },
-                                      text: 'E-mail'.tr,
-                                      style: const TextStyle(
-                                          color: AppThemeData.secondary300,
+            bottomNavigationBar: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: Platform.isAndroid ? 10 : 30),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ValueListenableBuilder(
+                            valueListenable: TranslationNotifier.refresh,
+                            builder: (_, __, ___) {
+                              return Text.rich(
+                                textAlign: TextAlign.center,
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                        text: 'Log in with'.tr,
+                                        style: TextStyle(
+                                          color: themeChange.getThem() ? AppThemeData.grey50 : AppThemeData.grey900,
                                           fontFamily: AppThemeData.medium,
                                           fontWeight: FontWeight.w500,
-                                          decoration: TextDecoration.underline,
-                                          decorationColor: AppThemeData.secondary300)),
-                                ],
-                              ),
-                            );
-                          }),
-                    ],
+                                        )),
+                                    const WidgetSpan(
+                                        child: SizedBox(
+                                      width: 10,
+                                    )),
+                                    TextSpan(
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () {
+                                            Get.offAll(const LoginScreen());
+                                          },
+                                        text: 'E-mail'.tr,
+                                        style: const TextStyle(
+                                            color: AppThemeData.secondary300,
+                                            fontFamily: AppThemeData.medium,
+                                            fontWeight: FontWeight.w500,
+                                            decoration: TextDecoration.underline,
+                                            decorationColor: AppThemeData.secondary300)),
+                                  ],
+                                ),
+                              );
+                            }),
+                      ],
+                    ),
                   ),
-                ),
-                InkWell(
-                  onTap: () {
-                    if (controller.phoneNUmberEditingController.value.text.isEmpty) {
-                      ShowToastDialog.showToast("Please enter mobile number");
-                    } else {
-                      controller.sendCode();
-                    }
-                  },
-                  child: Container(
-                    color: AppThemeData.driverApp300,
-                    width: Responsive.width(100, context),
-                    child: Padding(
+                  InkWell(
+                    onTap: () {
+                      if (controller.phoneNUmberEditingController.value.text.isEmpty) {
+                        ShowToastDialog.showToast("Please enter mobile number");
+                      } else {
+                        controller.sendCode();
+                      }
+                    },
+                    child: Container(
+                      color: AppThemeData.driverApp300,
+                      width: Responsive.width(100, context),
+                      alignment: Alignment.center,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: TranslatedText(
                         "Send Code via WhatsApp",
@@ -188,8 +191,8 @@ class PhoneNumberScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         });

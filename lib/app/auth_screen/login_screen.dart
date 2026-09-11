@@ -160,82 +160,83 @@ class LoginScreen extends StatelessWidget {
                 ],
               ),
             ),
-            bottomNavigationBar: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: Platform.isAndroid ? 10 : 30, horizontal: 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      RoundedButtonFill(
-                        title: "Continue with WhatsApp",
-                        textColor: themeChange.getThem() ? AppThemeData.grey100 : AppThemeData.grey900,
-                        color: themeChange.getThem() ? AppThemeData.grey900 : AppThemeData.grey100,
-                        icon: SvgPicture.asset(
-                          "assets/icons/ic_phone.svg",
-                          colorFilter: ColorFilter.mode(themeChange.getThem() ? AppThemeData.grey100 : AppThemeData.grey900, BlendMode.srcIn),
-                        ),
-                        isRight: false,
-                        onPress: () async {
-                          Get.to(const PhoneNumberScreen());
-                        },
-                      ),
-                      const SizedBox(
-                        height: 12,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: RoundedButtonFill(
-                              title: Platform.isIOS ? "with Google".tr : 'Continue with Google',
-                              textColor: themeChange.getThem() ? AppThemeData.grey100 : AppThemeData.grey900,
-                              color: themeChange.getThem() ? AppThemeData.grey900 : AppThemeData.grey100,
-                              icon: SvgPicture.asset("assets/icons/ic_google.svg"),
-                              isRight: false,
-                              onPress: () async {
-                                controller.loginWithGoogle();
-                              },
-                            ),
+            bottomNavigationBar: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: Platform.isAndroid ? 10 : 30, horizontal: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        RoundedButtonFill(
+                          title: "Continue with WhatsApp",
+                          textColor: themeChange.getThem() ? AppThemeData.grey100 : AppThemeData.grey900,
+                          color: themeChange.getThem() ? AppThemeData.grey900 : AppThemeData.grey100,
+                          icon: SvgPicture.asset(
+                            "assets/icons/ic_phone.svg",
+                            colorFilter: ColorFilter.mode(themeChange.getThem() ? AppThemeData.grey100 : AppThemeData.grey900, BlendMode.srcIn),
                           ),
-                          if (Platform.isIOS)
-                            const SizedBox(
-                              width: 10,
+                          isRight: false,
+                          onPress: () async {
+                            Get.to(const PhoneNumberScreen());
+                          },
+                        ),
+                        const SizedBox(
+                          height: 12,
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: RoundedButtonFill(
+                                title: Platform.isIOS ? "with Google".tr : 'Continue with Google',
+                                textColor: themeChange.getThem() ? AppThemeData.grey100 : AppThemeData.grey900,
+                                color: themeChange.getThem() ? AppThemeData.grey900 : AppThemeData.grey100,
+                                icon: SvgPicture.asset("assets/icons/ic_google.svg"),
+                                isRight: false,
+                                onPress: () async {
+                                  controller.loginWithGoogle();
+                                },
+                              ),
                             ),
-                          Platform.isIOS
-                              ? Expanded(
-                                  child: RoundedButtonFill(
-                                    title: "with Apple",
-                                    textColor: themeChange.getThem() ? AppThemeData.grey100 : AppThemeData.grey900,
-                                    color: themeChange.getThem() ? AppThemeData.grey900 : AppThemeData.grey100,
-                                    icon: SvgPicture.asset("assets/icons/ic_apple.svg"),
-                                    isRight: false,
-                                    onPress: () async {
-                                      controller.loginWithApple();
-                                    },
-                                  ),
-                                )
-                              : const SizedBox(),
-                        ],
-                      ),
-                    ],
+                            if (Platform.isIOS)
+                              const SizedBox(
+                                width: 10,
+                              ),
+                            Platform.isIOS
+                                ? Expanded(
+                                    child: RoundedButtonFill(
+                                      title: "with Apple",
+                                      textColor: themeChange.getThem() ? AppThemeData.grey100 : AppThemeData.grey900,
+                                      color: themeChange.getThem() ? AppThemeData.grey900 : AppThemeData.grey100,
+                                      icon: SvgPicture.asset("assets/icons/ic_apple.svg"),
+                                      isRight: false,
+                                      onPress: () async {
+                                        controller.loginWithApple();
+                                      },
+                                    ),
+                                  )
+                                : const SizedBox(),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                InkWell(
-                  onTap: () {
-                    if (controller.emailEditingController.value.text.trim().isEmpty) {
-                      ShowToastDialog.showToast("Please enter valid email");
-                    } else if (controller.passwordEditingController.value.text.trim().isEmpty) {
-                      ShowToastDialog.showToast("Please enter valid password");
-                    } else {
-                      controller.loginWithEmailAndPassword();
-                    }
-                  },
-                  child: Container(
-                    color: AppThemeData.driverApp300,
-                    width: Responsive.width(100, context),
-                    height: Responsive.width(16, context),
-                    child: Padding(
+                  InkWell(
+                    onTap: () {
+                      if (controller.emailEditingController.value.text.trim().isEmpty) {
+                        ShowToastDialog.showToast("Please enter valid email");
+                      } else if (controller.passwordEditingController.value.text.trim().isEmpty) {
+                        ShowToastDialog.showToast("Please enter valid password");
+                      } else {
+                        controller.loginWithEmailAndPassword();
+                      }
+                    },
+                    child: Container(
+                      color: AppThemeData.driverApp300,
+                      width: Responsive.width(100, context),
+                      alignment: Alignment.center,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: TranslatedText(
                         "Log in",
@@ -249,8 +250,8 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         });
