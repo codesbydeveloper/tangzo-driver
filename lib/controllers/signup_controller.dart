@@ -76,7 +76,7 @@ class SignupController extends GetxController {
     if (type.value == "google" || type.value == "apple" || type.value == "mobileNumber") {
       userModel.value.firstName = firstNameEditingController.value.text.toString();
       userModel.value.lastName = lastNameEditingController.value.text.toString();
-      userModel.value.email = emailEditingController.value.text.toString().toLowerCase();
+      userModel.value.email = emailEditingController.value.text.trim().toLowerCase();
       userModel.value.phoneNumber = phoneNUmberEditingController.value.text.toString();
       userModel.value.role = Constant.userRoleDriver;
       userModel.value.fcmToken = await NotificationService.getToken();
@@ -106,7 +106,7 @@ class SignupController extends GetxController {
         log("passwordEditingController.value.text :::: ${passwordEditingController.value.text}");
 
         final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: emailEditingController.value.text.trim(),
+          email: emailEditingController.value.text.trim().toLowerCase(),
           password: passwordEditingController.value.text.trim(),
         );
         log("emailEditingController.value.text :::: ${emailEditingController.value.text}");
@@ -115,7 +115,7 @@ class SignupController extends GetxController {
           userModel.value.id = credential.user!.uid;
           userModel.value.firstName = firstNameEditingController.value.text.toString();
           userModel.value.lastName = lastNameEditingController.value.text.toString();
-          userModel.value.email = emailEditingController.value.text.toString().toLowerCase();
+          userModel.value.email = emailEditingController.value.text.trim().toLowerCase();
           userModel.value.phoneNumber = phoneNUmberEditingController.value.text.toString();
           userModel.value.role = Constant.userRoleDriver;
           userModel.value.fcmToken = await NotificationService.getToken();

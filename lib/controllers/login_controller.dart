@@ -33,7 +33,7 @@ class LoginController extends GetxController {
     ShowToastDialog.showLoader("Please wait.");
     try {
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailEditingController.value.text.trim(),
+        email: emailEditingController.value.text.trim().toLowerCase(),
         password: passwordEditingController.value.text.trim(),
       );
       UserModel? userModel = await FireStoreUtils.getUserProfile(credential.user!.uid);
@@ -195,7 +195,7 @@ class LoginController extends GetxController {
         return null;
       }
 
-      UserModel? userModel = await FireStoreUtils.getUserByEmail(googleUser.email);
+      UserModel? userModel = await FireStoreUtils.getUserByEmail(googleUser.email.toLowerCase());
 
       if (userModel?.provider != "google" && userModel?.provider != "apple" && userModel?.provider != null) {
         ShowToastDialog.showToast("The account already exists for that email.");

@@ -10,17 +10,16 @@ class ChangePasswordController extends GetxController {
   Rx<TextEditingController> emailEditingController = TextEditingController().obs;
 
   Future<void> forgotPassword() async {
+    final email = emailEditingController.value.text.trim().toLowerCase();
     try {
-      if (emailEditingController.value.text.trim().isEmpty) {
+      if (email.isEmpty) {
         ShowToastDialog.showToast("Please enter a valid email.");
         return;
       }
       ShowToastDialog.showLoader("Please wait");
-      await FirebaseAuth.instance.sendPasswordResetEmail(
-        email: emailEditingController.value.text.trim(),
-      );
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       ShowToastDialog.closeLoader();
-      ShowToastDialog.showToast('${'Reset Password link sent your'.tr} ${emailEditingController.value.text} ${'email'.tr}');
+      ShowToastDialog.showToast('${'Reset Password link sent your'.tr} $email ${'email'.tr}');
       DashBoardController dashBoardController = Get.put(DashBoardController());
       dashBoardController.drawerIndex.value = 0;
       Get.offAll(DashBoardScreen());
