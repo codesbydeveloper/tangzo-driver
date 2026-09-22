@@ -528,6 +528,171 @@ class FireStoreUtils {
     return emailTemplateModel;
   }
 
+  // static Future<void> updateWallateAmount(OrderModel orderModel) async {
+  //   double subTotal = 0.0;
+  //   double specialDiscountAmount = 0.0;
+  //   double couponAmount = 0.0;
+  //   double productTaxAmount = 0.0;
+  //   double orderTaxAmount = 0.0;
+  //   double driverDeliveryTaxAmount = 0.0;
+  //   double packagingTaxAmount = 0.0;
+  //   double platformTaxAmount = 0.0;
+  //   double platformFee = 0.0;
+  //   double deliveryCharges = 0.0;
+  //   double deliveryTips = 0.0;
+  //   double packagingCharge = 0.0;
+  //
+  //   /// ---------------- SUBTOTAL ----------------
+  //   for (var element in orderModel.products!) {
+  //     final double price = (double.parse(element.discountPrice.toString()) > 0) ? double.parse(element.discountPrice.toString()) : double.parse(element.price.toString());
+  //
+  //     final double qty = double.parse(element.quantity.toString());
+  //     final double extras = double.parse(element.extrasPrice.toString());
+  //
+  //     subTotal += (price * qty) + (extras * qty);
+  //   }
+  //
+  //   /// ---------------- DISCOUNTS ----------------
+  //   couponAmount = double.parse(orderModel.discount.toString());
+  //
+  //   if (orderModel.specialDiscount != null && orderModel.specialDiscount!['special_discount'] != null) {
+  //     specialDiscountAmount = double.parse(orderModel.specialDiscount!['special_discount'].toString());
+  //   }
+  //
+  //   final double totalDiscount = couponAmount + specialDiscountAmount;
+  //
+  //   /// ---------------- DISCOUNT RATIO ----------------
+  //   double discountRatio = 0.0;
+  //   if (subTotal > 0 && totalDiscount > 0) {
+  //     discountRatio = totalDiscount / subTotal;
+  //   }
+  //
+  //   /// ---------------- PRODUCT TAX (AFTER DISCOUNT) ----------------
+  //   if (orderModel.taxScope == "product") {
+  //     for (var element in orderModel.products!) {
+  //       final double price = (double.parse(element.discountPrice.toString()) > 0) ? double.parse(element.discountPrice.toString()) : double.parse(element.price.toString());
+  //
+  //       final double qty = double.parse(element.quantity.toString());
+  //       final double extras = double.parse(element.extrasPrice.toString());
+  //
+  //       final double itemAmount = (price * qty) + (extras * qty);
+  //
+  //       final double discountedItemAmount = itemAmount - (itemAmount * discountRatio);
+  //
+  //       for (var taxElement in element.taxSetting!) {
+  //         if (taxElement.type == "fix") {
+  //           productTaxAmount += Constant.calculateTax(
+  //                 amount: discountedItemAmount.toString(),
+  //                 taxModel: taxElement,
+  //               ) *
+  //               qty;
+  //         } else {
+  //           productTaxAmount += Constant.calculateTax(
+  //             amount: discountedItemAmount.toString(),
+  //             taxModel: taxElement,
+  //           );
+  //         }
+  //       }
+  //     }
+  //   }
+  //
+  //   /// ---------------- ORDER LEVEL TAX ----------------
+  //   if (orderModel.taxScope == "order") {
+  //     for (var taxElement in orderModel.taxSetting ?? []) {
+  //       orderTaxAmount += Constant.calculateTax(
+  //         amount: (subTotal - totalDiscount).toString(),
+  //         taxModel: taxElement,
+  //       );
+  //     }
+  //   }
+  //
+  //   /// ---------------- OTHER CHARGES ----------------
+  //   deliveryCharges = double.parse(orderModel.deliveryCharge.toString());
+  //
+  //   deliveryTips = double.parse(orderModel.tipAmount.toString());
+  //
+  //   packagingCharge = double.parse(orderModel.vendor!.packagingCharge.toString());
+  //
+  //   platformFee = double.parse(orderModel.platformFee ?? '0.0');
+  //
+  //   /// ---------------- DELIVERY TAX ----------------
+  //   if (orderModel.takeAway != true && orderModel.vendor?.isSelfDelivery != true) {
+  //     for (var taxElement in orderModel.driverDeliveryTax ?? []) {
+  //       driverDeliveryTaxAmount += Constant.calculateTax(
+  //         amount: deliveryCharges.toString(),
+  //         taxModel: taxElement,
+  //       );
+  //     }
+  //   }
+  //
+  //   /// ---------------- PACKAGING TAX ----------------
+  //   if (packagingCharge > 0) {
+  //     for (var taxElement in orderModel.packagingTax ?? []) {
+  //       packagingTaxAmount += Constant.calculateTax(
+  //         amount: packagingCharge.toString(),
+  //         taxModel: taxElement,
+  //       );
+  //     }
+  //   }
+  //
+  //   /// ---------------- PLATFORM TAX ----------------
+  //   if (platformFee > 0) {
+  //     for (var taxElement in orderModel.platformTax ?? []) {
+  //       platformTaxAmount += Constant.calculateTax(
+  //         amount: platformFee.toString(),
+  //         taxModel: taxElement,
+  //       );
+  //     }
+  //   }
+  //
+  //   double driverAmount = 0.0;
+  //   final isCOD = orderModel.paymentMethod?.toLowerCase() == "cod";
+  //
+  //   if (isCOD) {
+  //     // Driver gives money back
+  //     driverAmount = -((subTotal - totalDiscount) + productTaxAmount + orderTaxAmount + packagingTaxAmount + platformTaxAmount + packagingCharge + platformFee);
+  //
+  //     WalletTransactionModel codTxn = WalletTransactionModel(
+  //       id: Constant.getUuid(),
+  //       amount: driverAmount,
+  //       date: Timestamp.now(),
+  //       paymentMethod: "COD",
+  //       transactionUser: "driver",
+  //       userId: FireStoreUtils.getCurrentUid(),
+  //       isTopup: false,
+  //       note: "COD order amount deduction",
+  //       orderId: orderModel.id,
+  //       paymentStatus: "success",
+  //     );
+  //
+  //     await FireStoreUtils.setWalletTransaction(codTxn);
+  //   } else {
+  //     // Online payment → driver earns
+  //     driverAmount = deliveryCharges + deliveryTips + driverDeliveryTaxAmount;
+  //
+  //     WalletTransactionModel onlineTxn = WalletTransactionModel(
+  //       id: Constant.getUuid(),
+  //       amount: driverAmount,
+  //       date: Timestamp.now(),
+  //       paymentMethod: orderModel.paymentMethod ?? "online",
+  //       transactionUser: "driver",
+  //       userId: FireStoreUtils.getCurrentUid(),
+  //       isTopup: true,
+  //       note: "Delivery charge & tips credited",
+  //       orderId: orderModel.id,
+  //       paymentStatus: "success",
+  //     );
+  //
+  //     await FireStoreUtils.setWalletTransaction(onlineTxn);
+  //   }
+  //
+  //   // ---------------- UPDATE DRIVER WALLET ----------------
+  //   await FireStoreUtils.updateUserWallet(
+  //     userId: orderModel.driverID!,
+  //     amount: driverAmount.toString(),
+  //   );
+  // }
+
   static Future<void> updateWallateAmount(OrderModel orderModel) async {
     double subTotal = 0.0;
     double specialDiscountAmount = 0.0;
@@ -582,9 +747,9 @@ class FireStoreUtils {
         for (var taxElement in element.taxSetting!) {
           if (taxElement.type == "fix") {
             productTaxAmount += Constant.calculateTax(
-                  amount: discountedItemAmount.toString(),
-                  taxModel: taxElement,
-                ) *
+              amount: discountedItemAmount.toString(),
+              taxModel: taxElement,
+            ) *
                 qty;
           } else {
             productTaxAmount += Constant.calculateTax(
@@ -649,8 +814,11 @@ class FireStoreUtils {
     final isCOD = orderModel.paymentMethod?.toLowerCase() == "cod";
 
     if (isCOD) {
-      // Driver gives money back
-      driverAmount = -((subTotal - totalDiscount) + productTaxAmount + orderTaxAmount + packagingTaxAmount + platformTaxAmount + packagingCharge + platformFee);
+      // Driver collected the full order in cash from the customer,
+      // including the delivery tax portion (driverDeliveryTaxAmount).
+      // That tax money belongs to Tangzo, not the driver -- so it is
+      // now included in what gets deducted/remitted back here.
+      driverAmount = -((subTotal - totalDiscount) + productTaxAmount + orderTaxAmount + packagingTaxAmount + platformTaxAmount + driverDeliveryTaxAmount + packagingCharge + platformFee);
 
       WalletTransactionModel codTxn = WalletTransactionModel(
         id: Constant.getUuid(),
@@ -667,8 +835,9 @@ class FireStoreUtils {
 
       await FireStoreUtils.setWalletTransaction(codTxn);
     } else {
-      // Online payment → driver earns
-      driverAmount = deliveryCharges + deliveryTips + driverDeliveryTaxAmount;
+      // Online payment -> driver earns strictly the base delivery fee
+      // plus customer tips. No tax money is ever included here.
+      driverAmount = deliveryCharges + deliveryTips;
 
       WalletTransactionModel onlineTxn = WalletTransactionModel(
         id: Constant.getUuid(),

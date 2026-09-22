@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Constant;
 import 'package:driver/constant/constant.dart';
 import 'package:driver/constant/show_toast_dialog.dart';
-import 'package:driver/config/cashfree_credentials.dart';
 import 'package:driver/controllers/cashfree_service_controller.dart';
 import 'package:driver/controllers/instamojo_service_controller.dart';
 import 'package:driver/controllers/mtnmomo_controller.dart';
@@ -126,13 +125,10 @@ class WalletController extends GetxController {
         instamojoModel.value = Instamojo.fromJson(jsonDecode(Preferences.getString(Preferences.instamojoSettings)));
         foloosiModel.value = Foloosi.fromJson(jsonDecode(Preferences.getString(Preferences.foloosiSettings)));
         payMongoModel.value = PayMongo.fromJson(jsonDecode(Preferences.getString(Preferences.payMongoSettings)));
-        cashfreeModel.value = Cashfree(
-          clientId: CashfreeCredentials.appId,
-          clientSecret: CashfreeCredentials.secretKey,
-          enable: true,
-          isSandbox: CashfreeCredentials.isSandbox,
-          name: 'Cashfree',
-        );
+        final cashFreePref = Preferences.getString(Preferences.cashFreeSettings);
+        if (cashFreePref.isNotEmpty) {
+          cashfreeModel.value = Cashfree.fromJson(jsonDecode(cashFreePref));
+        }
         selectedPaymentMethod.value = "cashfree";
         isLoadingPayment.value = false;
         // Other payment gateways disabled — only Cashfree is used
