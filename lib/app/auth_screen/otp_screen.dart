@@ -195,7 +195,7 @@ class OtpScreen extends StatelessWidget {
                                 return;
                               }
 
-                              if (!controller.verifyOtp(entered)) {
+                              if (!await controller.verifyOtp(entered)) {
                                 ShowToastDialog.showToast(
                                     "Incorrect OTP. Please try again.");
                                 return;

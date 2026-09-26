@@ -54,7 +54,9 @@ class OrderDetailsController extends GetxController {
 
     // ---------------- SUBTOTAL ----------------
     for (var element in orderModel.value.products!) {
-      final double price = (double.parse(element.discountPrice.toString()) > 0) ? double.parse(element.discountPrice.toString()) : double.parse(element.price.toString());
+      final double price = (double.parse(element.discountPrice.toString()) > 0)
+          ? double.parse(element.discountPrice.toString())
+          : double.parse(element.price.toString());
 
       final double qty = double.parse(element.quantity.toString());
       final double extras = double.parse(element.extrasPrice.toString());
@@ -65,13 +67,15 @@ class OrderDetailsController extends GetxController {
     // ---------------- DISCOUNTS ----------------
     couponAmount.value = double.parse(orderModel.value.discount.toString());
 
-    if (orderModel.value.specialDiscount != null && orderModel.value.specialDiscount!['special_discount'] != null) {
+    if (orderModel.value.specialDiscount != null &&
+        orderModel.value.specialDiscount!['special_discount'] != null) {
       specialDiscountAmount.value = double.parse(
         orderModel.value.specialDiscount!['special_discount'].toString(),
       );
     }
 
-    final double totalDiscount = couponAmount.value + specialDiscountAmount.value;
+    final double totalDiscount =
+        couponAmount.value + specialDiscountAmount.value;
 
     // ---------------- DISCOUNT RATIO ----------------
     double discountRatio = 0.0;
@@ -82,14 +86,18 @@ class OrderDetailsController extends GetxController {
     // ---------------- PRODUCT TAX (AFTER DISCOUNT) ----------------
     if (orderModel.value.taxScope == "product") {
       for (var element in orderModel.value.products!) {
-        final double price = (double.parse(element.discountPrice.toString()) > 0) ? double.parse(element.discountPrice.toString()) : double.parse(element.price.toString());
+        final double price =
+            (double.parse(element.discountPrice.toString()) > 0)
+                ? double.parse(element.discountPrice.toString())
+                : double.parse(element.price.toString());
 
         final double qty = double.parse(element.quantity.toString());
         final double extras = double.parse(element.extrasPrice.toString());
 
         final double itemAmount = (price * qty) + (extras * qty);
 
-        final double discountedItemAmount = itemAmount - (itemAmount * discountRatio);
+        final double discountedItemAmount =
+            itemAmount - (itemAmount * discountRatio);
 
         for (var taxElement in element.taxSetting!) {
           if (taxElement.type == "fix") {
@@ -119,16 +127,19 @@ class OrderDetailsController extends GetxController {
     }
 
     // ---------------- CHARGES ----------------
-    deliveryCharges.value = double.parse(orderModel.value.deliveryCharge.toString());
+    deliveryCharges.value =
+        double.parse(orderModel.value.deliveryCharge.toString());
 
     deliveryTips.value = double.parse(orderModel.value.tipAmount.toString());
 
-    packagingCharge.value = double.parse(orderModel.value.vendor!.packagingCharge.toString());
+    packagingCharge.value =
+        double.parse(orderModel.value.vendor!.packagingCharge.toString());
 
     platformFee.value = double.parse(orderModel.value.platformFee ?? '0.0');
 
     // ---------------- DELIVERY TAX ----------------
-    if (orderModel.value.takeAway != true && orderModel.value.vendor?.isSelfDelivery != true) {
+    if (orderModel.value.takeAway != true &&
+        orderModel.value.vendor?.isSelfDelivery != true) {
       for (var taxElement in orderModel.value.driverDeliveryTax ?? []) {
         driverDeliveryTaxAmount.value += Constant.calculateTax(
           amount: deliveryCharges.value.toString(),
@@ -158,18 +169,25 @@ class OrderDetailsController extends GetxController {
     }
 
     // ---------------- TOTAL TAX ----------------
-    totalTaxAmount.value = productTaxAmount.value + orderTaxAmount.value + driverDeliveryTaxAmount.value + packagingTaxAmount.value + platformTaxAmount.value;
+    totalTaxAmount.value = productTaxAmount.value +
+        orderTaxAmount.value +
+        driverDeliveryTaxAmount.value +
+        packagingTaxAmount.value +
+        platformTaxAmount.value;
 
-    // ---------------- FINAL TOTAL ----------------
+    // ---------------- FINAL TOTAL (GST excluded) ----------------
     if (orderModel.value.paymentMethod == 'cod') {
       if (orderModel.value.isFreeDelivery == false) {
-        totalAmount.value = (subTotal.value - totalDiscount) + totalTaxAmount.value + deliveryCharges.value + deliveryTips.value + packagingCharge.value + platformFee.value;
+        totalAmount.value = (subTotal.value - totalDiscount) +
+            deliveryCharges.value +
+            deliveryTips.value +
+            packagingCharge.value +
+            platformFee.value;
       } else {
-        totalAmount.value = (subTotal.value - totalDiscount) + totalTaxAmount.value + packagingCharge.value + platformFee.value;
+        totalAmount.value = (subTotal.value - totalDiscount) + packagingCharge.value + platformFee.value;
       }
     } else {
-      // Online payment (delivery-only capture)
-      totalAmount.value = deliveryCharges.value + deliveryTips.value + driverDeliveryTaxAmount.value;
+      totalAmount.value = deliveryCharges.value + deliveryTips.value;
     }
 
     isLoading.value = false;

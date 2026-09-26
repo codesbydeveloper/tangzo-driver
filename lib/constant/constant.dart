@@ -40,6 +40,20 @@ class Constant {
 
   static bool singleOrderReceive = false;
   static String driverLocationUpdate = '50';
+
+  /// When true, live GPS goes to Redis via Cloud Functions (Phase 2).
+  /// Set false to roll back to Firestore users.location writes.
+  static bool useRedisDriverLocation = true;
+
+  /// Phase 3: Redis presence key driver:{id}:online (TTL ~90s).
+  /// Firestore users.isActive remains durable audit/state.
+  static bool useRedisDriverPresence = true;
+
+  /// Phase 2A rate control (see REDIS_IMPLEMENTATION_PLAN.md):
+  /// - GPS distanceFilter stays [driverLocationUpdate] meters (default 50; admin-configurable).
+  /// - Redis publish min interval: 8s (coalesced).
+  /// - Redis heartbeat while online: 45s (keeps ~90s TTL alive when stationary).
+  /// Do not lower distanceFilter solely because Redis is faster.
   static String minimumDepositToRideAccept = '0.0';
   static String minimumAmountToWithdrawal = '0.0';
 
@@ -110,10 +124,14 @@ class Constant {
   static String apiKeyOfDeepl = ""; // AI/ML or Deepl
 
   static String amountShow({required String? amount}) {
-    final value = (amount == null || amount == "null" || amount.isEmpty) ? 0.0 : double.parse(amount);
+    final value = (amount == null || amount == "null" || amount.isEmpty)
+        ? 0.0
+        : double.parse(amount);
     final formatted = value.toStringAsFixed(currencyModel?.decimalDigits ?? 0);
     final symbol = currencyModel?.symbol ?? '';
-    return currencyModel?.symbolAtRight == true ? '$formatted$symbol' : '$symbol$formatted';
+    return currencyModel?.symbolAtRight == true
+        ? '$formatted$symbol'
+        : '$symbol$formatted';
   }
 
   static Color statusText({required String? status}) {
@@ -146,17 +164,23 @@ class Constant {
       if (taxModel.type == "fix") {
         taxAmount = double.parse(taxModel.tax.toString());
       } else {
-        taxAmount = (double.parse(amount.toString()) * double.parse(taxModel.tax!.toString())) / 100;
+        taxAmount = (double.parse(amount.toString()) *
+                double.parse(taxModel.tax!.toString())) /
+            100;
       }
     }
     return taxAmount;
   }
 
-  static String calculateReview({required String? reviewCount, required String? reviewSum}) {
-    if (0 == double.parse(reviewSum.toString()) && 0 == double.parse(reviewSum.toString())) {
+  static String calculateReview(
+      {required String? reviewCount, required String? reviewSum}) {
+    if (0 == double.parse(reviewSum.toString()) &&
+        0 == double.parse(reviewSum.toString())) {
       return "0";
     }
-    return (double.parse(reviewSum.toString()) / double.parse(reviewCount.toString())).toStringAsFixed(1);
+    return (double.parse(reviewSum.toString()) /
+            double.parse(reviewCount.toString()))
+        .toStringAsFixed(1);
   }
 
   static const userPlaceHolder = 'assets/images/user_placeholder.png';
@@ -173,7 +197,9 @@ class Constant {
 
   static Widget showEmptyView({required String message}) {
     return Center(
-      child: TranslatedText(message, style: const TextStyle(fontFamily: AppThemeData.medium, fontSize: 18)),
+      child: TranslatedText(message,
+          style:
+              const TextStyle(fontFamily: AppThemeData.medium, fontSize: 18)),
     );
   }
 
@@ -198,7 +224,8 @@ class Constant {
   }
 
   String? validateEmail(String? value) {
-    String pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+    String pattern =
+        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
     RegExp regExp = RegExp(pattern);
     if (value == null || value.isEmpty) {
       return "Email is Required";
@@ -209,7 +236,11 @@ class Constant {
     }
   }
 
-  static String getDistance({required String lat1, required String lng1, required String lat2, required String lng2}) {
+  static String getDistance(
+      {required String lat1,
+      required String lng1,
+      required String lat2,
+      required String lng2}) {
     double distance;
     double distanceInMeters = Geolocator.distanceBetween(
       double.parse(lat1),
@@ -226,7 +257,8 @@ class Constant {
   }
 
   bool hasValidUrl(String value) {
-    String pattern = r'(http|https)://[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:/~+#-]*[\w@?^=%&amp;/~+#-])?';
+    String pattern =
+        r'(http|https)://[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:/~+#-]*[\w@?^=%&amp;/~+#-])?';
     RegExp regExp = RegExp(pattern);
     if (value.isEmpty) {
       return false;
@@ -236,10 +268,13 @@ class Constant {
     return true;
   }
 
-  static Future<String> uploadUserImageToFireStorage(File image, String filePath, String fileName) async {
-    Reference upload = FirebaseStorage.instance.ref().child('$filePath/$fileName');
+  static Future<String> uploadUserImageToFireStorage(
+      File image, String filePath, String fileName) async {
+    Reference upload =
+        FirebaseStorage.instance.ref().child('$filePath/$fileName');
     UploadTask uploadTask = upload.putFile(image);
-    var downloadUrl = await (await uploadTask.whenComplete(() {})).ref.getDownloadURL();
+    var downloadUrl =
+        await (await uploadTask.whenComplete(() {})).ref.getDownloadURL();
     return downloadUrl.toString();
   }
 
@@ -262,9 +297,12 @@ class Constant {
 
   Future<Uint8List> getBytesFromAsset(String path, int width) async {
     ByteData data = await rootBundle.load(path);
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetWidth: width);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
+        targetWidth: width);
     ui.FrameInfo fi = await codec.getNextFrame();
-    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
+    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
+        .buffer
+        .asUint8List();
   }
 
   // Future<Uint8List> getBytesFromAssetDriver(String path, int width) async {
@@ -339,7 +377,9 @@ class Constant {
 
   static int calculateDifference(DateTime date) {
     DateTime now = DateTime.now();
-    return DateTime(date.year, date.month, date.day).difference(DateTime(now.year, now.month, now.day)).inDays;
+    return DateTime(date.year, date.month, date.day)
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
   }
 
   static String timestampToDate(Timestamp timestamp) {
@@ -368,7 +408,10 @@ class Constant {
   }
 
   static DateTime stringToDate(String openDineTime) {
-    return DateFormat('HH:mm').parse(DateFormat('HH:mm').format(DateFormat("hh:mm a").parse((Intl.getCurrentLocale() == "en_US") ? openDineTime : openDineTime.toLowerCase())));
+    return DateFormat('HH:mm').parse(DateFormat('HH:mm').format(
+        DateFormat("hh:mm a").parse((Intl.getCurrentLocale() == "en_US")
+            ? openDineTime
+            : openDineTime.toLowerCase())));
   }
 
   static LanguageModel getLanguage() {
@@ -381,13 +424,15 @@ class Constant {
     return "#${(orderId).substring(orderId.length - 10)}";
   }
 
-  static Future<void> checkPermission({required BuildContext context, required Function() onTap}) async {
+  static Future<void> checkPermission(
+      {required BuildContext context, required Function() onTap}) async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.denied) {
-      ShowToastDialog.showToast("You have to allow location permission to use your location");
+      ShowToastDialog.showToast(
+          "You have to allow location permission to use your location");
     } else if (permission == LocationPermission.deniedForever) {
       showDialog(
         context: context,
@@ -404,7 +449,10 @@ class Constant {
     int crossings = 0;
     for (int i = 0; i < polygon.length; i++) {
       int next = (i + 1) % polygon.length;
-      if (polygon[i].latitude <= point.latitude && polygon[next].latitude > point.latitude || polygon[i].latitude > point.latitude && polygon[next].latitude <= point.latitude) {
+      if (polygon[i].latitude <= point.latitude &&
+              polygon[next].latitude > point.latitude ||
+          polygon[i].latitude > point.latitude &&
+              polygon[next].latitude <= point.latitude) {
         double edgeLong = polygon[next].longitude - polygon[i].longitude;
         double edgeLat = polygon[next].latitude - polygon[i].latitude;
         double interpol = (point.latitude - polygon[i].latitude) / edgeLat;
@@ -417,16 +465,26 @@ class Constant {
   }
 
   static final smtpServer = SmtpServer(mailSettings!.host.toString(),
-      username: mailSettings!.userName.toString(), password: mailSettings!.password.toString(), port: 465, ignoreBadCertificate: false, ssl: true, allowInsecure: true);
+      username: mailSettings!.userName.toString(),
+      password: mailSettings!.password.toString(),
+      port: 465,
+      ignoreBadCertificate: false,
+      ssl: true,
+      allowInsecure: true);
 
-  static Future<void> sendMail({String? subject, String? body, bool? isAdmin = false, List<dynamic>? recipients}) async {
+  static Future<void> sendMail(
+      {String? subject,
+      String? body,
+      bool? isAdmin = false,
+      List<dynamic>? recipients}) async {
     // Create our message.
     print("mailSettings :: ${mailSettings?.toJson()}");
     if (isAdmin == true) {
       recipients!.add(mailSettings!.userName.toString());
     }
     final message = Message()
-      ..from = Address(mailSettings!.userName.toString(), mailSettings!.fromName.toString())
+      ..from = Address(
+          mailSettings!.userName.toString(), mailSettings!.fromName.toString())
       ..recipients = recipients!
       ..subject = subject
       ..text = body
@@ -449,10 +507,12 @@ class Constant {
     // await connection.send(message);
   }
 
-  static Uri createCoordinatesUrl(double latitude, double longitude, [String? label]) {
+  static Uri createCoordinatesUrl(double latitude, double longitude,
+      [String? label]) {
     Uri uri;
     if (kIsWeb) {
-      uri = Uri.https('www.google.com', '/maps/search/', {'api': '1', 'query': '$latitude,$longitude'});
+      uri = Uri.https('www.google.com', '/maps/search/',
+          {'api': '1', 'query': '$latitude,$longitude'});
     } else if (Platform.isAndroid) {
       var query = '$latitude,$longitude';
       if (label != null) query += '($label)';
@@ -462,7 +522,8 @@ class Constant {
       if (label != null) params['q'] = label;
       uri = Uri.https('maps.apple.com', '/', params);
     } else {
-      uri = Uri.https('www.google.com', '/maps/search/', {'api': '1', 'query': '$latitude,$longitude'});
+      uri = Uri.https('www.google.com', '/maps/search/',
+          {'api': '1', 'query': '$latitude,$longitude'});
     }
 
     return uri;

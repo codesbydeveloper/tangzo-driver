@@ -223,33 +223,15 @@ class DrawerView extends StatelessWidget {
                           if (controller.userModel.value.isAutoVerify == false) {
                             if (Constant.isDriverVerification == true) {
                               if (controller.userModel.value.isDocumentVerify == true) {
-                                controller.userModel.value.isActive = value;
-                                controller.userModel.value.inProgressOrderID = Constant.userModel!.inProgressOrderID;
-                                controller.userModel.value.orderRequestData = Constant.userModel!.orderRequestData;
-                                if (controller.userModel.value.isActive == true) {
-                                  controller.updateCurrentLocation();
-                                }
-                                await FireStoreUtils.updateUser(controller.userModel.value);
+                                await controller.setAvailableStatus(value);
                               } else {
                                 ShowToastDialog.showToast("Document verification is pending. Please proceed to set up your document verification.");
                               }
                             } else {
-                              controller.userModel.value.isActive = value;
-                              controller.userModel.value.inProgressOrderID = Constant.userModel!.inProgressOrderID;
-                              controller.userModel.value.orderRequestData = Constant.userModel!.orderRequestData;
-                              if (controller.userModel.value.isActive == true) {
-                                controller.updateCurrentLocation();
-                              }
-                              await FireStoreUtils.updateUser(controller.userModel.value);
+                              await controller.setAvailableStatus(value);
                             }
                           } else {
-                            controller.userModel.value.isActive = value;
-                            controller.userModel.value.inProgressOrderID = Constant.userModel!.inProgressOrderID;
-                            controller.userModel.value.orderRequestData = Constant.userModel!.orderRequestData;
-                            if (controller.userModel.value.isActive == true) {
-                              controller.updateCurrentLocation();
-                            }
-                            await FireStoreUtils.updateUser(controller.userModel.value);
+                            await controller.setAvailableStatus(value);
                           }
                         },
                       ),

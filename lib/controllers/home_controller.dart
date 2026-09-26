@@ -178,6 +178,7 @@ class HomeController extends GetxController {
       (event) async {
         if (event.exists) {
           driverModel.value = UserModel.fromJson(event.data()!);
+          _applyLocalGpsToDriverModel();
           if (driverModel.value.id != null) {
             isLoading.value = false;
             update();
@@ -191,6 +192,22 @@ class HomeController extends GetxController {
         print("Driver listener error: $e");
       },
     );
+  }
+
+  /// When live GPS is in Redis, Firestore users.location may be stale.
+  /// Prefer the device's latest GPS held in Constant.locationDataFinal for the driver map.
+  void _applyLocalGpsToDriverModel() {
+    final gps = Constant.locationDataFinal;
+    if (gps?.latitude == null || gps?.longitude == null) {
+      return;
+    }
+    driverModel.value.location = UserLocation(
+      latitude: gps!.latitude,
+      longitude: gps.longitude,
+    );
+    if (gps.heading != null) {
+      driverModel.value.rotation = gps.heading;
+    }
   }
 
   Future<void> _setupOrderListener() async {
@@ -289,7 +306,7 @@ class HomeController extends GetxController {
   // Change data (trigger when order changes)
   // -------------------------
   Future<void> changeData() async {
-    // Debug log
+    _applyLocalGpsToDriverModel();
 
     // Build directions / route
     if (Constant.mapType == "inappmap") {
