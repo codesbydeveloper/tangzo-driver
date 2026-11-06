@@ -46,6 +46,7 @@ import 'package:driver/models/withdraw_method_model.dart';
 import 'package:driver/models/withdrawal_model.dart';
 import 'package:driver/models/zone_model.dart';
 import 'package:driver/services/audio_player_service.dart';
+import 'package:driver/services/settings_api.dart';
 import 'package:driver/themes/app_them_data.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -197,6 +198,112 @@ class FireStoreUtils {
 
   static Future<void> getSettings() async {
     try {
+      final bundle = await SettingsApi.getBundle();
+      // Warm Redis/prefs off the critical path (CF is high-latency from India).
+      // ignore: unawaited_futures
+      SettingsApi.refreshInBackground();
+      if (bundle != null && bundle.docs.isNotEmpty) {
+        final docs = bundle.docs;
+        final global = docs['globalSettings'];
+        if (global != null) {
+          Constant.defaultCountryCode = global['defaultCountryCode'] ?? '';
+          Constant.orderRingtoneUrl = global['order_ringtone_url'] ?? '';
+          Constant.isSelfDeliveryFeature = global['isSelfDelivery'] ?? false;
+          Preferences.setString(Preferences.orderRingtone, Constant.orderRingtoneUrl);
+          final color = global['app_driver_color']?.toString();
+          if (color != null && color.isNotEmpty) {
+            AppThemeData.driverApp300 =
+                Color(int.parse(color.replaceFirst("#", "0xff")));
+          }
+          if (Constant.orderRingtoneUrl.isNotEmpty) {
+            await AudioPlayerService.initAudio();
+          }
+        }
+        final mapKey = docs['googleMapKey'];
+        if (mapKey != null) Constant.mapAPIKey = mapKey['key'];
+        final notif = docs['notification_setting'];
+        if (notif != null) {
+          Constant.senderId = notif['projectId'];
+          Constant.jsonNotificationFileURL = notif['serviceJson'];
+        }
+        final nearby = docs['RestaurantNearBy'];
+        if (nearby != null) Constant.distanceType = nearby['distanceType'];
+        final privacy = docs['privacyPolicy'];
+        if (privacy != null) Constant.privacyPolicy = privacy['privacy_policy'];
+        final terms = docs['termsAndConditions'];
+        if (terms != null) {
+          Constant.termsAndConditions = terms['termsAndConditions'];
+        }
+        final version = docs['Version'];
+        if (version != null) {
+          Constant.googlePlayLink = version['googlePlayLink'] ?? '';
+          Constant.appStoreLink = version['appStoreLink'] ?? '';
+          Constant.appVersion = version['app_version'] ?? '';
+        }
+        final referral = docs['referral_amount'];
+        if (referral != null) Constant.referralAmount = referral['referralAmount'];
+        final email = docs['emailSetting'];
+        if (email != null) Constant.mailSettings = MailSettings.fromJson(email);
+        final placeholder = docs['placeHolderImage'];
+        if (placeholder != null) Constant.placeHolderImage = placeholder['image'];
+        final docVer = docs['document_verification_settings'];
+        if (docVer != null) {
+          Constant.isDriverVerification = docVer['isDriverVerification'];
+        }
+        final driverNear = docs['DriverNearBy'];
+        if (driverNear != null) {
+          Constant.minimumDepositToRideAccept =
+              driverNear['minimumDepositToRideAccept'];
+          Constant.minimumAmountToWithdrawal =
+              driverNear['minimumAmountToWithdrawal'];
+          Constant.driverLocationUpdate = driverNear['driverLocationUpdate'];
+          Constant.singleOrderReceive = driverNear['singleOrderReceive'];
+          Constant.selectedMapType = driverNear['selectedMapType'];
+          Constant.mapType = driverNear['mapType'];
+          Constant.autoApproveDriver = driverNear['auto_approve_driver'];
+        }
+        final localisation = docs['localisationSettings'];
+        if (localisation != null) {
+          Constant.apiKeyOfDeepl = localisation['apiKeyOfDeepl'] ?? '';
+          Constant.localisationType = localisation['localisationType'] ?? '';
+        }
+      } else {
+        await fireStore.collection(CollectionName.settings).doc("globalSettings").get().then((value) async {
+          Constant.defaultCountryCode = value.data()?["defaultCountryCode"] ?? '';
+          Constant.orderRingtoneUrl = value.data()?['order_ringtone_url'] ?? '';
+          Constant.isSelfDeliveryFeature = value.data()!['isSelfDelivery'] ?? false;
+          Preferences.setString(Preferences.orderRingtone, Constant.orderRingtoneUrl);
+          AppThemeData.driverApp300 = Color(int.parse(value.data()!['app_driver_color'].replaceFirst("#", "0xff")));
+          if (Constant.orderRingtoneUrl.isNotEmpty) {
+            await AudioPlayerService.initAudio();
+          }
+        });
+        fireStore.collection(CollectionName.settings).doc('referral_amount').get().then((value) {
+          Constant.referralAmount = value.data()!['referralAmount'];
+        });
+        fireStore.collection(CollectionName.settings).doc("emailSetting").get().then((value) {
+          if (value.exists) {
+            Constant.mailSettings = MailSettings.fromJson(value.data()!);
+          }
+        });
+        fireStore.collection(CollectionName.settings).doc('placeHolderImage').get().then((value) {
+          Constant.placeHolderImage = value.data()!['image'];
+        });
+        await fireStore.collection(CollectionName.settings).doc("document_verification_settings").get().then((value) {
+          Constant.isDriverVerification = value.data()!['isDriverVerification'];
+        });
+        await fireStore.collection(CollectionName.settings).doc("DriverNearBy").get().then((value) {
+          Constant.minimumDepositToRideAccept = value.data()!['minimumDepositToRideAccept'];
+          Constant.minimumAmountToWithdrawal = value.data()!['minimumAmountToWithdrawal'];
+          Constant.driverLocationUpdate = value.data()!['driverLocationUpdate'];
+          Constant.singleOrderReceive = value.data()!['singleOrderReceive'];
+          Constant.selectedMapType = value.data()!["selectedMapType"];
+          Constant.mapType = value.data()!["mapType"];
+          Constant.autoApproveDriver = value.data()!["auto_approve_driver"];
+        });
+      }
+
+      // Live snapshots only where UX requires realtime updates.
       fireStore.collection(CollectionName.settings).doc("localisationSettings").snapshots().listen((event) {
         if (event.exists) {
           Constant.apiKeyOfDeepl = event.data()?["apiKeyOfDeepl"] ?? '';
@@ -214,83 +321,23 @@ class FireStoreUtils {
         Constant.currencyModel!.name = "Indian Rupee";
         Constant.currencyModel!.symbolAtRight = false;
       });
-      await fireStore.collection(CollectionName.settings).doc("globalSettings").get().then((value) async {
-        Constant.defaultCountryCode = value.data()?["defaultCountryCode"] ?? '';
-        Constant.orderRingtoneUrl = value.data()?['order_ringtone_url'] ?? '';
-        Constant.isSelfDeliveryFeature = value.data()!['isSelfDelivery'] ?? false;
-        Preferences.setString(Preferences.orderRingtone, Constant.orderRingtoneUrl);
-        AppThemeData.driverApp300 = Color(int.parse(value.data()!['app_driver_color'].replaceFirst("#", "0xff")));
-        if (Constant.orderRingtoneUrl.isNotEmpty) {
-          await AudioPlayerService.initAudio();
-        }
-      });
-
       fireStore.collection(CollectionName.settings).doc("googleMapKey").snapshots().listen((event) {
         if (event.exists) {
           Constant.mapAPIKey = event.data()!["key"];
         }
       });
-
       fireStore.collection(CollectionName.settings).doc("notification_setting").snapshots().listen((event) {
         if (event.exists) {
           Constant.senderId = event.data()?["projectId"];
           Constant.jsonNotificationFileURL = event.data()?["serviceJson"];
         }
       });
-
-      fireStore.collection(CollectionName.settings).doc("RestaurantNearBy").snapshots().listen((event) {
-        if (event.exists) {
-          Constant.distanceType = event.data()!["distanceType"];
-        }
-      });
-
-      fireStore.collection(CollectionName.settings).doc("privacyPolicy").snapshots().listen((event) {
-        if (event.exists) {
-          Constant.privacyPolicy = event.data()!["privacy_policy"];
-        }
-      });
-
-      fireStore.collection(CollectionName.settings).doc("termsAndConditions").snapshots().listen((event) {
-        if (event.exists) {
-          Constant.termsAndConditions = event.data()!["termsAndConditions"];
-        }
-      });
-
       fireStore.collection(CollectionName.settings).doc("Version").snapshots().listen((event) {
         if (event.exists) {
           Constant.googlePlayLink = event.data()!["googlePlayLink"] ?? '';
           Constant.appStoreLink = event.data()!["appStoreLink"] ?? '';
           Constant.appVersion = event.data()!["app_version"] ?? '';
         }
-      });
-
-      fireStore.collection(CollectionName.settings).doc('referral_amount').get().then((value) {
-        Constant.referralAmount = value.data()!['referralAmount'];
-      });
-
-      fireStore.collection(CollectionName.settings).doc("emailSetting").get().then((value) {
-        if (value.exists) {
-          Constant.mailSettings = MailSettings.fromJson(value.data()!);
-        }
-      });
-
-      fireStore.collection(CollectionName.settings).doc('placeHolderImage').get().then((value) {
-        Constant.placeHolderImage = value.data()!['image'];
-      });
-
-      await fireStore.collection(CollectionName.settings).doc("document_verification_settings").get().then((value) {
-        Constant.isDriverVerification = value.data()!['isDriverVerification'];
-      });
-
-      await fireStore.collection(CollectionName.settings).doc("DriverNearBy").get().then((value) {
-        Constant.minimumDepositToRideAccept = value.data()!['minimumDepositToRideAccept'];
-        Constant.minimumAmountToWithdrawal = value.data()!['minimumAmountToWithdrawal'];
-        Constant.driverLocationUpdate = value.data()!['driverLocationUpdate'];
-        Constant.singleOrderReceive = value.data()!['singleOrderReceive'];
-        Constant.selectedMapType = value.data()!["selectedMapType"];
-        Constant.mapType = value.data()!["mapType"];
-        Constant.autoApproveDriver = value.data()!["auto_approve_driver"];
-        log("Constant.singleOrderReceive :: ${Constant.singleOrderReceive}");
       });
     } catch (e) {
       log(e.toString());
@@ -772,13 +819,10 @@ class FireStoreUtils {
     }
 
     /// ---------------- OTHER CHARGES ----------------
-    deliveryCharges = double.parse(orderModel.deliveryCharge.toString());
-
-    deliveryTips = double.parse(orderModel.tipAmount.toString());
-
-    packagingCharge = double.parse(orderModel.vendor!.packagingCharge.toString());
-
-    platformFee = double.parse(orderModel.platformFee ?? '0.0');
+    deliveryCharges = double.tryParse(orderModel.deliveryCharge?.toString() ?? '0') ?? 0.0;
+    deliveryTips = double.tryParse(orderModel.tipAmount?.toString() ?? '0') ?? 0.0;
+    packagingCharge = double.tryParse(orderModel.vendor?.packagingCharge?.toString() ?? '0') ?? 0.0;
+    platformFee = double.tryParse(orderModel.platformFee ?? '0.0') ?? 0.0;
 
     /// ---------------- DELIVERY TAX ----------------
     if (orderModel.takeAway != true && orderModel.vendor?.isSelfDelivery != true) {
@@ -856,8 +900,12 @@ class FireStoreUtils {
     }
 
     // ---------------- UPDATE DRIVER WALLET ----------------
+    final driverId = orderModel.driverID ?? FireStoreUtils.getCurrentUid();
+    if (driverId.isEmpty) {
+      throw Exception('Driver id missing for wallet update');
+    }
     await FireStoreUtils.updateUserWallet(
-      userId: orderModel.driverID!,
+      userId: driverId,
       amount: driverAmount.toString(),
     );
   }

@@ -113,6 +113,7 @@ class HomeController extends GetxController {
   // Order actions
   // -------------------------
   Future<void> acceptOrder() async {
+    ShowToastDialog.closeLoader();
     ShowToastDialog.showLoader("Please wait");
     await AudioPlayerService.playSound(false);
     driverModel.value.inProgressOrderID ??= [];
@@ -133,6 +134,7 @@ class HomeController extends GetxController {
   }
 
   Future<void> rejectOrder() async {
+    ShowToastDialog.closeLoader();
     ShowToastDialog.showLoader("Please wait");
     await AudioPlayerService.playSound(false);
     currentOrder.value.rejectedByDrivers?.add(driverModel.value.id);
@@ -319,6 +321,8 @@ class HomeController extends GetxController {
 
     // Play a sound for pending
     if (currentOrder.value.status == Constant.driverPending) {
+      // Ensure any leftover "Please wait" overlay is gone so Accept/Reject work.
+      ShowToastDialog.closeLoader();
       await AudioPlayerService.playSound(true);
     } else {
       await AudioPlayerService.playSound(false);

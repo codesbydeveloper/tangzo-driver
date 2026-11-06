@@ -10,25 +10,28 @@ class ZoneModel {
 
   ZoneModel(
       {this.area,
-        this.publish,
-        this.latitude,
-        this.name,
-        this.id,
-        this.longitude});
+      this.publish,
+      this.latitude,
+      this.name,
+      this.id,
+      this.longitude});
 
   ZoneModel.fromJson(Map<String, dynamic> json) {
     if (json['area'] != null) {
       area = <GeoPoint>[];
-      json['area'].forEach((v) {
-        area!.add(v);
-      });
+      for (final v in (json['area'] as List)) {
+        final point = _toGeoPoint(v);
+        if (point != null) {
+          area!.add(point);
+        }
+      }
     }
 
     publish = json['publish'];
-    latitude = json['latitude'];
-    name = json['name'];
-    id = json['id'];
-    longitude = json['longitude'];
+    latitude = _toDouble(json['latitude']);
+    name = json['name']?.toString();
+    id = json['id']?.toString();
+    longitude = _toDouble(json['longitude']);
   }
 
   Map<String, dynamic> toJson() {
@@ -42,5 +45,26 @@ class ZoneModel {
     data['id'] = id;
     data['longitude'] = longitude;
     return data;
+  }
+
+  static GeoPoint? _toGeoPoint(dynamic v) {
+    if (v == null) return null;
+    if (v is GeoPoint) return v;
+    if (v is Map) {
+      final lat = _toDouble(v['latitude'] ?? v['_latitude'] ?? v['lat']);
+      final lng = _toDouble(v['longitude'] ?? v['_longitude'] ?? v['lng']);
+      if (lat != null && lng != null) {
+        return GeoPoint(lat, lng);
+      }
+    }
+    return null;
+  }
+
+  static double? _toDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString());
   }
 }

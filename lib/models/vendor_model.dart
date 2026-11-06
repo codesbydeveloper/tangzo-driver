@@ -46,51 +46,55 @@ class VendorModel {
   String? subscriptionTotalOrders;
   bool? isSelfDelivery;
   String? packagingCharge;
+  int? menuVersion;
+  Timestamp? menuUpdatedAt;
 
   VendorModel(
       {this.author,
-        this.dineInActive,
-        this.openDineTime,
-        this.categoryID,
-        this.id,
-        this.categoryPhoto,
-        this.restaurantMenuPhotos,
-        this.workingHours,
-        this.location,
-        this.fcmToken,
-        this.g,
-        this.hidephotos,
-        this.reststatus,
-        this.filters,
-        this.reviewsCount,
-        this.photo,
-        this.description,
-        this.walletAmount,
-        this.closeDineTime,
-        this.zoneId,
-        this.createdAt,
-        this.longitude,
-        this.enabledDiveInFuture,
-        this.restaurantCost,
-        this.deliveryCharge,
-        this.adminCommission,
-        this.authorProfilePic,
-        this.authorName,
-        this.phonenumber,
-        this.specialDiscount,
-        this.specialDiscountEnable,
-        this.coordinates,
-        this.reviewsSum,
-        this.photos,
-        this.title,
-        this.categoryTitle,
-        this.latitude,
-        this.subscriptionPlanId,
-        this.subscriptionExpiryDate,
-        this.subscriptionPlan,
-        this.subscriptionTotalOrders,
-        this.isSelfDelivery,
-        this.packagingCharge});
+      this.dineInActive,
+      this.openDineTime,
+      this.categoryID,
+      this.id,
+      this.categoryPhoto,
+      this.restaurantMenuPhotos,
+      this.workingHours,
+      this.location,
+      this.fcmToken,
+      this.g,
+      this.hidephotos,
+      this.reststatus,
+      this.filters,
+      this.reviewsCount,
+      this.photo,
+      this.description,
+      this.walletAmount,
+      this.closeDineTime,
+      this.zoneId,
+      this.createdAt,
+      this.longitude,
+      this.enabledDiveInFuture,
+      this.restaurantCost,
+      this.deliveryCharge,
+      this.adminCommission,
+      this.authorProfilePic,
+      this.authorName,
+      this.phonenumber,
+      this.specialDiscount,
+      this.specialDiscountEnable,
+      this.coordinates,
+      this.reviewsSum,
+      this.photos,
+      this.title,
+      this.categoryTitle,
+      this.latitude,
+      this.subscriptionPlanId,
+      this.subscriptionExpiryDate,
+      this.subscriptionPlan,
+      this.subscriptionTotalOrders,
+      this.isSelfDelivery,
+      this.packagingCharge,
+      this.menuVersion,
+      this.menuUpdatedAt});
 
   VendorModel.fromJson(Map<String, dynamic> json) {
     author = json['author'];
@@ -146,6 +150,10 @@ class VendorModel {
     subscriptionTotalOrders = json['subscriptionTotalOrders'];
     isSelfDelivery = json['isSelfDelivery'] ?? false;
     packagingCharge = json['packagingCharge'] ?? "0";
+    menuVersion = json['menuVersion'] is int
+        ? json['menuVersion'] as int
+        : int.tryParse(json['menuVersion']?.toString() ?? '');
+    menuUpdatedAt = json['menuUpdatedAt'];
   }
 
   Map<String, dynamic> toJson() {
@@ -205,6 +213,8 @@ class VendorModel {
     data['latitude'] = latitude;
     data['isSelfDelivery'] = isSelfDelivery ?? false;
     data['packagingCharge'] = packagingCharge;
+    data['menuVersion'] = menuVersion;
+    data['menuUpdatedAt'] = menuUpdatedAt;
     return data;
   }
 }

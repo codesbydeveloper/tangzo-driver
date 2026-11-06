@@ -129,17 +129,28 @@ class WalletController extends GetxController {
         if (cashFreePref.isNotEmpty) {
           cashfreeModel.value = Cashfree.fromJson(jsonDecode(cashFreePref));
         }
-        selectedPaymentMethod.value = "cashfree";
+        if (cashfreeModel.value.enable == true) {
+          selectedPaymentMethod.value = "cashfree";
+        } else if (payStackModel.value.isEnable == true) {
+          selectedPaymentMethod.value = "payStack";
+        } else if (stripeModel.value.isEnabled == true) {
+          selectedPaymentMethod.value = "stripe";
+        } else if (razorPayModel.value.isEnabled == true) {
+          selectedPaymentMethod.value = "razorpay";
+        } else {
+          selectedPaymentMethod.value = '';
+        }
         isLoadingPayment.value = false;
-        // Other payment gateways disabled — only Cashfree is used
-        // flutterStipe.Stripe.publishableKey = stripeModel.value.clientpublishableKey.toString();
-        // flutterStipe.Stripe.merchantIdentifier = 'Foodie Driver';
-        // flutterStipe.Stripe.instance.applySettings();
+        if (stripeModel.value.isEnabled == true) {
+          flutterStipe.Stripe.publishableKey = stripeModel.value.clientpublishableKey.toString();
+          flutterStipe.Stripe.merchantIdentifier = 'Foodie Driver';
+          flutterStipe.Stripe.instance.applySettings();
+        }
         setRef();
 
-        // razorPay.on(Razorpay.EVENT_PAYMENT_SUCCESS, handlePaymentSuccess);
-        // razorPay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWaller);
-        // razorPay.on(Razorpay.EVENT_PAYMENT_ERROR, handlePaymentError);
+        razorPay.on(Razorpay.EVENT_PAYMENT_SUCCESS, handlePaymentSuccess);
+        razorPay.on(Razorpay.EVENT_EXTERNAL_WALLET, handleExternalWaller);
+        razorPay.on(Razorpay.EVENT_PAYMENT_ERROR, handlePaymentError);
       },
     );
   }
@@ -1030,26 +1041,25 @@ class WalletController extends GetxController {
 
   Future<void> cashFreeMakePayment({required BuildContext context, required String amount, required String paymentDesc}) async {
     ShowToastDialog.showLoader("Please wait");
-    await CashfreeService()
-        .createPaymentLink(cashfree: cashfreeModel.value, userModel: userModel.value, amount: double.parse(double.parse(amount).toStringAsFixed(2)), paymentDesc: paymentDesc)
-        .then((result) {
-      if (result != null) {
-        Get.to(WebUrlServiceScreen(initialURl: result))?.then((value) {
-          ShowToastDialog.closeLoader();
-          if (value) {
-            ShowToastDialog.showToast("Payment Successful!!");
-            walletTopUp();
-            Get.back();
-          } else {
-            ShowToastDialog.showToast("Payment UnSuccessful!!");
-          }
-        });
-        // final bool isDone = await Navigator.push(context, MaterialPageRoute(builder: (context) => MercadoPagoScreen(initialURl: result['response']['init_point'])));
-      } else {
+    final started = await CashfreeService().startCheckoutPayment(
+      cashfree: cashfreeModel.value,
+      userModel: userModel.value,
+      amount: double.parse(double.parse(amount).toStringAsFixed(2)),
+      paymentDesc: paymentDesc,
+      onSuccess: (orderId) {
         ShowToastDialog.closeLoader();
-        ShowToastDialog.showToast("Error while transaction!");
-      }
-    });
+        ShowToastDialog.showToast("Payment Successful!!");
+        walletTopUp();
+        Get.back();
+      },
+      onError: (message) {
+        ShowToastDialog.closeLoader();
+        ShowToastDialog.showToast(message);
+      },
+    );
+    if (started) {
+      ShowToastDialog.closeLoader();
+    }
   }
 
   Future<void> makeInstamojoPayment({required String amount, required String paymentDesc}) async {

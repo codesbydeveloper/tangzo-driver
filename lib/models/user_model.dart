@@ -170,9 +170,20 @@ class UserLocation {
 
   UserLocation({this.latitude, this.longitude});
 
-  UserLocation.fromJson(Map<String, dynamic> json) {
-    latitude = json['latitude'];
-    longitude = json['longitude'];
+  UserLocation.fromJson(dynamic json) {
+    if (json == null) return;
+    // Firestore may store a GeoPoint or a plain {latitude, longitude} map.
+    if (json is GeoPoint) {
+      latitude = json.latitude;
+      longitude = json.longitude;
+      return;
+    }
+    if (json is Map) {
+      final lat = json['latitude'] ?? json['_latitude'];
+      final lng = json['longitude'] ?? json['_longitude'];
+      latitude = lat == null ? null : double.tryParse(lat.toString());
+      longitude = lng == null ? null : double.tryParse(lng.toString());
+    }
   }
 
   Map<String, dynamic> toJson() {
