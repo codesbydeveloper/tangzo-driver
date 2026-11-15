@@ -92,6 +92,15 @@ class Constant {
   static const String orderInTransit = "In Transit";
   static const String orderCompleted = "Order Completed";
   static const String orderCancelled = "Order Cancelled";
+  static const String noRiderAvailable = "No Rider Available";
+
+  static const String deliveryPartnerShadowfax = "shadowfax";
+  static const String deliveryPartnerShadowfaxPending = "shadowfax_pending";
+
+  static bool isShadowfaxPartner(String? deliveryPartner) {
+    return deliveryPartner == deliveryPartnerShadowfax ||
+        deliveryPartner == deliveryPartnerShadowfaxPending;
+  }
 
   static CurrencyModel? currencyModel;
   static List<TaxModel>? taxList = [];
@@ -151,8 +160,10 @@ class Constant {
       return AppThemeData.secondary300;
     } else if (status == orderAccepted || status == orderCompleted) {
       return AppThemeData.success400;
-    } else if (status == orderRejected) {
+    } else if (status == orderRejected || status == orderCancelled) {
       return AppThemeData.danger300;
+    } else if (status == noRiderAvailable) {
+      return AppThemeData.warning300;
     } else {
       return AppThemeData.warning300;
     }

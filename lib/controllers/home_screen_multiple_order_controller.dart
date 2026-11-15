@@ -58,6 +58,30 @@ class HomeScreenMultipleOrderController extends GetxController {
   Future<void> acceptOrder(OrderModel currentOrder) async {
     ShowToastDialog.showLoader("Please wait");
     await AudioPlayerService.playSound(false);
+
+    final orderId = currentOrder.id;
+    if (orderId == null || orderId.isEmpty) {
+      ShowToastDialog.closeLoader();
+      ShowToastDialog.showToast("Order already assigned");
+      return;
+    }
+    final fresh = await FireStoreUtils.getOrderById(orderId);
+    if (fresh == null ||
+        Constant.isShadowfaxPartner(fresh.deliveryPartner) ||
+        fresh.status == Constant.noRiderAvailable ||
+        fresh.status == Constant.orderCancelled ||
+        fresh.status == Constant.orderRejected ||
+        (fresh.driverID != null &&
+            fresh.driverID!.isNotEmpty &&
+            fresh.driverID != driverModel.value.id)) {
+      driverModel.value.orderRequestData?.remove(orderId);
+      driverModel.value.inProgressOrderID?.remove(orderId);
+      await FireStoreUtils.updateUser(driverModel.value);
+      ShowToastDialog.closeLoader();
+      ShowToastDialog.showToast("Order already assigned");
+      return;
+    }
+
     driverModel.value.inProgressOrderID ?? [];
     driverModel.value.orderRequestData?.remove(currentOrder.id);
     driverModel.value.inProgressOrderID?.add(currentOrder.id);

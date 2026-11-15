@@ -167,6 +167,10 @@ class HomeScreenMultipleOrder extends StatelessWidget {
                                                                               return const SizedBox();
                                                                             } else {
                                                                               OrderModel orderModel = snapshot.data!;
+                                                                              if (Constant.isShadowfaxPartner(orderModel.deliveryPartner) ||
+                                                                                  orderModel.status == Constant.noRiderAvailable) {
+                                                                                return const SizedBox();
+                                                                              }
                                                                               double distanceInMeters = Geolocator.distanceBetween(
                                                                                   orderModel.vendor!.latitude ?? 0.0,
                                                                                   orderModel.vendor!.longitude ?? 0.0,

@@ -116,6 +116,33 @@ class HomeController extends GetxController {
     ShowToastDialog.closeLoader();
     ShowToastDialog.showLoader("Please wait");
     await AudioPlayerService.playSound(false);
+
+    // Re-read order before accept — may already be claimed by Shadowfax
+    final orderId = currentOrder.value.id;
+    if (orderId == null || orderId.isEmpty) {
+      ShowToastDialog.closeLoader();
+      ShowToastDialog.showToast("Order already assigned");
+      return;
+    }
+    final fresh = await FireStoreUtils.getOrderById(orderId);
+    if (fresh == null ||
+        Constant.isShadowfaxPartner(fresh.deliveryPartner) ||
+        fresh.status == Constant.noRiderAvailable ||
+        fresh.status == Constant.orderCancelled ||
+        fresh.status == Constant.orderRejected ||
+        (fresh.driverID != null &&
+            fresh.driverID!.isNotEmpty &&
+            fresh.driverID != driverModel.value.id)) {
+      driverModel.value.orderRequestData?.remove(orderId);
+      driverModel.value.inProgressOrderID?.remove(orderId);
+      await FireStoreUtils.updateUser(driverModel.value);
+      currentOrder.value = OrderModel();
+      await clearMap();
+      ShowToastDialog.closeLoader();
+      ShowToastDialog.showToast("Order already assigned");
+      return;
+    }
+
     driverModel.value.inProgressOrderID ??= [];
     driverModel.value.orderRequestData?.remove(currentOrder.value.id);
     driverModel.value.inProgressOrderID?.add(currentOrder.value.id);
@@ -266,6 +293,18 @@ class HomeController extends GetxController {
           (snap) async {
             if (snap.docs.isNotEmpty) {
               final newOrder = OrderModel.fromJson(snap.docs.first.data());
+              // Never show Shadowfax / no-rider orders in driver UI
+              if (Constant.isShadowfaxPartner(newOrder.deliveryPartner) ||
+                  newOrder.status == Constant.noRiderAvailable) {
+                driverModel.value.orderRequestData?.remove(newOrder.id);
+                driverModel.value.inProgressOrderID?.remove(newOrder.id);
+                await FireStoreUtils.updateUser(driverModel.value);
+                currentOrder.value = OrderModel();
+                await clearMap();
+                await AudioPlayerService.playSound(false);
+                update();
+                return;
+              }
               currentOrder.value = newOrder;
               changeData();
             } else {
