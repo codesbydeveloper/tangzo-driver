@@ -31,4 +31,6 @@ class CollectionName {
   static const String withdrawMethod = "withdraw_method";
   static const String zone = "zone";
   static const String chat = "chat";
+  static const String driverCashback = "driver_cashback";
+  static const String driverCashbackRedeem = "driver_cashback_redeem";
 }

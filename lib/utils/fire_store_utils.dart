@@ -11,6 +11,8 @@ import 'package:driver/firebase_options.dart';
 import 'package:driver/models/cashfree_model.dart';
 import 'package:driver/models/conversation_model.dart';
 import 'package:driver/models/currency_model.dart';
+import 'package:driver/models/driver_cashback_model.dart';
+import 'package:driver/models/driver_cashback_redeem_model.dart';
 import 'package:driver/models/document_model.dart';
 import 'package:driver/models/driver_document_model.dart';
 import 'package:driver/models/email_template_model.dart';
@@ -158,6 +160,27 @@ class FireStoreUtils {
     return isUpdate;
   }
 
+  /// Avoid full-document set() on every splash when FCM token is unchanged.
+  static Future<void> updateFcmTokenIfChanged({
+    required String userId,
+    required String? token,
+  }) async {
+    if (userId.isEmpty || token == null || token.isEmpty) return;
+    try {
+      final ref = fireStore.collection(CollectionName.users).doc(userId);
+      final snap = await ref.get();
+      if (!snap.exists) return;
+      final current = snap.data()?['fcmToken']?.toString();
+      if (current == token) return;
+      await ref.update({'fcmToken': token});
+      if (Constant.userModel?.id == userId) {
+        Constant.userModel!.fcmToken = token;
+      }
+    } catch (e) {
+      log('updateFcmTokenIfChanged: $e');
+    }
+  }
+
   static Future<List<OnBoardingModel>> getOnBoardingList() async {
     List<OnBoardingModel> onBoardingModel = [];
     await fireStore.collection(CollectionName.onBoarding).where("type", isEqualTo: "driverApp").get().then((value) {
@@ -198,150 +221,165 @@ class FireStoreUtils {
 
   static Future<void> getSettings() async {
     try {
-      final bundle = await SettingsApi.getBundle();
-      // Warm Redis/prefs off the critical path (CF is high-latency from India).
-      // ignore: unawaited_futures
-      SettingsApi.refreshInBackground();
+      var bundle = await SettingsApi.getBundle();
+      if (bundle == null || bundle.docs.isEmpty) {
+        bundle = await SettingsApi.raceBundle(
+          firestoreLoader: _fetchDriverSettingsDocs,
+        );
+      }
       if (bundle != null && bundle.docs.isNotEmpty) {
-        final docs = bundle.docs;
-        final global = docs['globalSettings'];
-        if (global != null) {
-          Constant.defaultCountryCode = global['defaultCountryCode'] ?? '';
-          Constant.orderRingtoneUrl = global['order_ringtone_url'] ?? '';
-          Constant.isSelfDeliveryFeature = global['isSelfDelivery'] ?? false;
-          Preferences.setString(Preferences.orderRingtone, Constant.orderRingtoneUrl);
-          final color = global['app_driver_color']?.toString();
-          if (color != null && color.isNotEmpty) {
-            AppThemeData.driverApp300 =
-                Color(int.parse(color.replaceFirst("#", "0xff")));
-          }
-          if (Constant.orderRingtoneUrl.isNotEmpty) {
-            await AudioPlayerService.initAudio();
-          }
-        }
-        final mapKey = docs['googleMapKey'];
-        if (mapKey != null) Constant.mapAPIKey = mapKey['key'];
-        final notif = docs['notification_setting'];
-        if (notif != null) {
-          Constant.senderId = notif['projectId'];
-          Constant.jsonNotificationFileURL = notif['serviceJson'];
-        }
-        final nearby = docs['RestaurantNearBy'];
-        if (nearby != null) Constant.distanceType = nearby['distanceType'];
-        final privacy = docs['privacyPolicy'];
-        if (privacy != null) Constant.privacyPolicy = privacy['privacy_policy'];
-        final terms = docs['termsAndConditions'];
-        if (terms != null) {
-          Constant.termsAndConditions = terms['termsAndConditions'];
-        }
-        final version = docs['Version'];
-        if (version != null) {
-          Constant.googlePlayLink = version['googlePlayLink'] ?? '';
-          Constant.appStoreLink = version['appStoreLink'] ?? '';
-          Constant.appVersion = version['app_version'] ?? '';
-        }
-        final referral = docs['referral_amount'];
-        if (referral != null) Constant.referralAmount = referral['referralAmount'];
-        final email = docs['emailSetting'];
-        if (email != null) Constant.mailSettings = MailSettings.fromJson(email);
-        final placeholder = docs['placeHolderImage'];
-        if (placeholder != null) Constant.placeHolderImage = placeholder['image'];
-        final docVer = docs['document_verification_settings'];
-        if (docVer != null) {
-          Constant.isDriverVerification = docVer['isDriverVerification'];
-        }
-        final driverNear = docs['DriverNearBy'];
-        if (driverNear != null) {
-          Constant.minimumDepositToRideAccept =
-              driverNear['minimumDepositToRideAccept'];
-          Constant.minimumAmountToWithdrawal =
-              driverNear['minimumAmountToWithdrawal'];
-          Constant.driverLocationUpdate = driverNear['driverLocationUpdate'];
-          Constant.singleOrderReceive = driverNear['singleOrderReceive'];
-          Constant.selectedMapType = driverNear['selectedMapType'];
-          Constant.mapType = driverNear['mapType'];
-          Constant.autoApproveDriver = driverNear['auto_approve_driver'];
-        }
-        final localisation = docs['localisationSettings'];
-        if (localisation != null) {
-          Constant.apiKeyOfDeepl = localisation['apiKeyOfDeepl'] ?? '';
-          Constant.localisationType = localisation['localisationType'] ?? '';
+        await _applyDriverSettingsDocs(bundle.docs);
+        SettingsApi.markApplied(bundle);
+        if (bundle.docs['driverCashbackOffer'] == null) {
+          await _loadDriverCashbackOfferSetting();
         }
       } else {
-        await fireStore.collection(CollectionName.settings).doc("globalSettings").get().then((value) async {
-          Constant.defaultCountryCode = value.data()?["defaultCountryCode"] ?? '';
-          Constant.orderRingtoneUrl = value.data()?['order_ringtone_url'] ?? '';
-          Constant.isSelfDeliveryFeature = value.data()!['isSelfDelivery'] ?? false;
-          Preferences.setString(Preferences.orderRingtone, Constant.orderRingtoneUrl);
-          AppThemeData.driverApp300 = Color(int.parse(value.data()!['app_driver_color'].replaceFirst("#", "0xff")));
-          if (Constant.orderRingtoneUrl.isNotEmpty) {
-            await AudioPlayerService.initAudio();
-          }
-        });
-        fireStore.collection(CollectionName.settings).doc('referral_amount').get().then((value) {
-          Constant.referralAmount = value.data()!['referralAmount'];
-        });
-        fireStore.collection(CollectionName.settings).doc("emailSetting").get().then((value) {
-          if (value.exists) {
-            Constant.mailSettings = MailSettings.fromJson(value.data()!);
-          }
-        });
-        fireStore.collection(CollectionName.settings).doc('placeHolderImage').get().then((value) {
-          Constant.placeHolderImage = value.data()!['image'];
-        });
-        await fireStore.collection(CollectionName.settings).doc("document_verification_settings").get().then((value) {
-          Constant.isDriverVerification = value.data()!['isDriverVerification'];
-        });
-        await fireStore.collection(CollectionName.settings).doc("DriverNearBy").get().then((value) {
-          Constant.minimumDepositToRideAccept = value.data()!['minimumDepositToRideAccept'];
-          Constant.minimumAmountToWithdrawal = value.data()!['minimumAmountToWithdrawal'];
-          Constant.driverLocationUpdate = value.data()!['driverLocationUpdate'];
-          Constant.singleOrderReceive = value.data()!['singleOrderReceive'];
-          Constant.selectedMapType = value.data()!["selectedMapType"];
-          Constant.mapType = value.data()!["mapType"];
-          Constant.autoApproveDriver = value.data()!["auto_approve_driver"];
-        });
+        await _applyDriverSettingsDocs(await _fetchDriverSettingsDocs());
+        await _loadDriverCashbackOfferSetting();
       }
 
-      // Live snapshots only where UX requires realtime updates.
-      fireStore.collection(CollectionName.settings).doc("localisationSettings").snapshots().listen((event) {
-        if (event.exists) {
-          Constant.apiKeyOfDeepl = event.data()?["apiKeyOfDeepl"] ?? '';
-          Constant.localisationType = event.data()?["localisationType"] ?? '';
-        }
-      });
-      FireStoreUtils.fireStore.collection(CollectionName.currencies).where("isActive", isEqualTo: true).snapshots().listen((event) {
-        if (event.docs.isNotEmpty) {
-          Constant.currencyModel = CurrencyModel.fromJson(event.docs.first.data());
-        } else {
-          Constant.currencyModel = CurrencyModel(id: "", code: "INR", decimalDigits: 2, enable: true, name: "Indian Rupee", symbol: "₹", symbolAtRight: false);
-        }
-        Constant.currencyModel!.symbol = "₹";
-        Constant.currencyModel!.code = "INR";
-        Constant.currencyModel!.name = "Indian Rupee";
-        Constant.currencyModel!.symbolAtRight = false;
-      });
-      fireStore.collection(CollectionName.settings).doc("googleMapKey").snapshots().listen((event) {
-        if (event.exists) {
-          Constant.mapAPIKey = event.data()!["key"];
-        }
-      });
-      fireStore.collection(CollectionName.settings).doc("notification_setting").snapshots().listen((event) {
-        if (event.exists) {
-          Constant.senderId = event.data()?["projectId"];
-          Constant.jsonNotificationFileURL = event.data()?["serviceJson"];
-        }
-      });
-      fireStore.collection(CollectionName.settings).doc("Version").snapshots().listen((event) {
-        if (event.exists) {
-          Constant.googlePlayLink = event.data()!["googlePlayLink"] ?? '';
-          Constant.appStoreLink = event.data()!["appStoreLink"] ?? '';
-          Constant.appVersion = event.data()!["app_version"] ?? '';
-        }
-      });
+      // ignore: unawaited_futures
+      SettingsApi.refreshInBackground(
+        onFresh: (fresh) async {
+          await _applyDriverSettingsDocs(fresh.docs);
+          SettingsApi.markApplied(fresh);
+        },
+      );
+
+      Constant.currencyModel ??= CurrencyModel(
+        id: "",
+        code: "INR",
+        decimalDigits: 2,
+        enable: true,
+        name: "Indian Rupee",
+        symbol: "₹",
+        symbolAtRight: false,
+      );
+      Constant.currencyModel!.symbol = "₹";
+      Constant.currencyModel!.code = "INR";
+      Constant.currencyModel!.name = "Indian Rupee";
+      Constant.currencyModel!.symbolAtRight = false;
+
+      // Live cashback listener deferred until dashboard — see ensureDriverLiveSettingsAttached().
     } catch (e) {
       log(e.toString());
     }
+  }
+
+  static Future<Map<String, Map<String, dynamic>?>>
+      _fetchDriverSettingsDocs() async {
+    const ids = [
+      'globalSettings',
+      'googleMapKey',
+      'notification_setting',
+      'RestaurantNearBy',
+      'privacyPolicy',
+      'termsAndConditions',
+      'Version',
+      'referral_amount',
+      'emailSetting',
+      'placeHolderImage',
+      'document_verification_settings',
+      'DriverNearBy',
+      'driverCashbackOffer',
+      'localisationSettings',
+    ];
+    final snaps = await Future.wait(
+      ids.map((id) => fireStore.collection(CollectionName.settings).doc(id).get()),
+    );
+    final docs = <String, Map<String, dynamic>?>{};
+    for (var i = 0; i < ids.length; i++) {
+      docs[ids[i]] = snaps[i].data();
+    }
+    return docs;
+  }
+
+  static Future<void> _applyDriverSettingsDocs(
+    Map<String, Map<String, dynamic>?> docs,
+  ) async {
+    final global = docs['globalSettings'];
+    if (global != null) {
+      Constant.defaultCountryCode = global['defaultCountryCode'] ?? '';
+      Constant.orderRingtoneUrl = global['order_ringtone_url'] ?? '';
+      Constant.isSelfDeliveryFeature = global['isSelfDelivery'] ?? false;
+      Preferences.setString(Preferences.orderRingtone, Constant.orderRingtoneUrl);
+      final color = global['app_driver_color']?.toString();
+      if (color != null && color.isNotEmpty) {
+        AppThemeData.driverApp300 =
+            Color(int.parse(color.replaceFirst("#", "0xff")));
+      }
+      if (Constant.orderRingtoneUrl.isNotEmpty) {
+        await AudioPlayerService.initAudio();
+      }
+    }
+    final mapKey = docs['googleMapKey'];
+    if (mapKey != null) Constant.mapAPIKey = mapKey['key'];
+    final notif = docs['notification_setting'];
+    if (notif != null) {
+      Constant.senderId = notif['projectId'];
+      Constant.jsonNotificationFileURL = notif['serviceJson'];
+    }
+    final nearby = docs['RestaurantNearBy'];
+    if (nearby != null) Constant.distanceType = nearby['distanceType'];
+    final privacy = docs['privacyPolicy'];
+    if (privacy != null) Constant.privacyPolicy = privacy['privacy_policy'];
+    final terms = docs['termsAndConditions'];
+    if (terms != null) {
+      Constant.termsAndConditions = terms['termsAndConditions'];
+    }
+    final version = docs['Version'];
+    if (version != null) {
+      Constant.googlePlayLink = version['googlePlayLink'] ?? '';
+      Constant.appStoreLink = version['appStoreLink'] ?? '';
+      Constant.appVersion = version['app_version'] ?? '';
+    }
+    final referral = docs['referral_amount'];
+    if (referral != null) Constant.referralAmount = referral['referralAmount'];
+    final email = docs['emailSetting'];
+    if (email != null) Constant.mailSettings = MailSettings.fromJson(email);
+    final placeholder = docs['placeHolderImage'];
+    if (placeholder != null) Constant.placeHolderImage = placeholder['image'];
+    final docVer = docs['document_verification_settings'];
+    if (docVer != null) {
+      Constant.isDriverVerification = docVer['isDriverVerification'];
+    }
+    final driverNear = docs['DriverNearBy'];
+    if (driverNear != null) {
+      Constant.minimumDepositToRideAccept =
+          driverNear['minimumDepositToRideAccept'];
+      Constant.minimumAmountToWithdrawal =
+          driverNear['minimumAmountToWithdrawal'];
+      Constant.driverLocationUpdate = driverNear['driverLocationUpdate'];
+      Constant.singleOrderReceive = driverNear['singleOrderReceive'];
+      Constant.selectedMapType = driverNear['selectedMapType'];
+      Constant.mapType = driverNear['mapType'];
+      Constant.autoApproveDriver = driverNear['auto_approve_driver'];
+    }
+    final driverCashbackOffer = docs['driverCashbackOffer'];
+    if (driverCashbackOffer != null) {
+      Constant.isDriverCashbackActive = driverCashbackOffer['isEnable'] ?? false;
+    }
+    final localisation = docs['localisationSettings'];
+    if (localisation != null) {
+      Constant.apiKeyOfDeepl = localisation['apiKeyOfDeepl'] ?? '';
+      Constant.localisationType = localisation['localisationType'] ?? '';
+    }
+  }
+
+  static bool _driverLiveSettingsAttached = false;
+
+  static void ensureDriverLiveSettingsAttached() {
+    if (_driverLiveSettingsAttached) return;
+    _driverLiveSettingsAttached = true;
+    fireStore
+        .collection(CollectionName.settings)
+        .doc("driverCashbackOffer")
+        .snapshots()
+        .listen((event) {
+      if (event.exists) {
+        Constant.isDriverCashbackActive = event.data()?['isEnable'] ?? false;
+      }
+    });
   }
 
   static Future<List<ZoneModel>?> getZone() async {
@@ -1400,5 +1438,97 @@ class FireStoreUtils {
 
   static void stopSeenForOrderListener() {
     orderChatSeenSubscription.cancel();
+  }
+
+  static Future<void> _loadDriverCashbackOfferSetting() async {
+    try {
+      final value =
+          await fireStore.collection(CollectionName.settings).doc("driverCashbackOffer").get();
+      if (value.exists) {
+        Constant.isDriverCashbackActive = value.data()?['isEnable'] ?? false;
+      }
+    } catch (e) {
+      log('load driverCashbackOffer: $e');
+    }
+  }
+
+  /// Fresh read used right before attaching cashback (avoids stale in-memory flag).
+  static Future<bool> refreshDriverCashbackOfferEnabled() async {
+    await _loadDriverCashbackOfferSetting();
+    return Constant.isDriverCashbackActive;
+  }
+
+  static Future<List<DriverCashbackModel>> getAllDriverCashbacks() async {
+    final list = <DriverCashbackModel>[];
+    try {
+      final snap = await fireStore.collection(CollectionName.driverCashback).get();
+      for (final doc in snap.docs) {
+        list.add(DriverCashbackModel.fromJson(doc.data()));
+      }
+    } catch (e) {
+      log('getAllDriverCashbacks: $e');
+    }
+    return list;
+  }
+
+  static Future<List<DriverCashbackRedeemModel>> getDriverRedeemedCashbacks(
+    String cashbackId,
+    String driverId,
+  ) async {
+    final list = <DriverCashbackRedeemModel>[];
+    try {
+      final snap = await fireStore
+          .collection(CollectionName.driverCashbackRedeem)
+          .where('cashbackId', isEqualTo: cashbackId)
+          .where('userId', isEqualTo: driverId)
+          .get();
+      for (final doc in snap.docs) {
+        list.add(DriverCashbackRedeemModel.fromJson(doc.data()));
+      }
+    } catch (e) {
+      log('getDriverRedeemedCashbacks: $e');
+    }
+    return list;
+  }
+
+  static Future<bool> setDriverCashbackRedeem(DriverCashbackRedeemModel model) async {
+    bool ok = false;
+    try {
+      await fireStore
+          .collection(CollectionName.driverCashbackRedeem)
+          .doc(model.id)
+          .set(model.toJson());
+      ok = true;
+    } catch (e) {
+      log('setDriverCashbackRedeem: $e');
+    }
+    return ok;
+  }
+
+  static Future<bool> deleteDriverCashbackRedeem(OrderModel orderModel) async {
+    bool deleted = false;
+    try {
+      QuerySnapshot snap;
+      if (orderModel.driverCashback?.id != null &&
+          orderModel.driverCashback!.id!.isNotEmpty) {
+        snap = await fireStore
+            .collection(CollectionName.driverCashbackRedeem)
+            .where('orderId', isEqualTo: orderModel.id)
+            .where('cashbackId', isEqualTo: orderModel.driverCashback!.id)
+            .get();
+      } else {
+        snap = await fireStore
+            .collection(CollectionName.driverCashbackRedeem)
+            .where('orderId', isEqualTo: orderModel.id)
+            .get();
+      }
+      for (final doc in snap.docs) {
+        await fireStore.collection(CollectionName.driverCashbackRedeem).doc(doc.id).delete();
+        deleted = true;
+      }
+    } catch (e) {
+      log('deleteDriverCashbackRedeem: $e');
+    }
+    return deleted;
   }
 }

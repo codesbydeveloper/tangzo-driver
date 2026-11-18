@@ -8,6 +8,7 @@ import 'package:driver/firebase_options.dart';
 import 'package:driver/models/language_model.dart';
 import 'package:driver/services/audio_player_service.dart';
 import 'package:driver/services/localization_service.dart';
+import 'package:driver/services/settings_api.dart';
 import 'package:driver/themes/safe_bottom_app_builder.dart';
 import 'package:driver/themes/styles.dart';
 import 'package:driver/utils/dark_theme_provider.dart';
@@ -50,6 +51,7 @@ void main() async {
       }
     }
     await Preferences.initPref();
+    SettingsApi.prefetch();
     // _initLanguage();
     runApp(const MyApp());
   }, (error, stackTrace) {});

@@ -477,6 +477,19 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+              if ((controller.currentOrder.value.driverCashback?.cashbackValue ?? 0) > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, bottom: 2),
+                  child: Text(
+                    "You'll get ${Constant.amountShow(amount: controller.currentOrder.value.driverCashback!.cashbackValue.toString())} cashback",
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      fontFamily: AppThemeData.medium,
+                      color: AppThemeData.success400,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
               const SizedBox(
                 height: 10,
               ),
@@ -1067,6 +1080,19 @@ class HomeScreen extends StatelessWidget {
                         height: 5,
                       ),
                     ],
+                  ),
+                if ((controller.currentOrder.value.driverCashback?.cashbackValue ?? 0) > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, bottom: 2),
+                    child: Text(
+                      "You'll get ${Constant.amountShow(amount: controller.currentOrder.value.driverCashback!.cashbackValue.toString())} cashback",
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontFamily: AppThemeData.medium,
+                        color: AppThemeData.success400,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 const SizedBox(
                   height: 10,

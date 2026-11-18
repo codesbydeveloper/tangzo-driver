@@ -1,5 +1,3 @@
-import 'dart:developer';
-import 'package:driver/models/user_model.dart';
 import 'package:driver/utils/fire_store_utils.dart';
 import 'package:driver/utils/notification_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -22,17 +20,13 @@ class GlobalSettingController extends GetxController {
 
   void notificationInit() {
     notificationService.initInfo().then((value) async {
-      String? token = await NotificationService.getToken();
-      log(":::::::TOKEN:::::: $token");
-      if (FirebaseAuth.instance.currentUser != null) {
-        await FireStoreUtils.getUserProfile(FireStoreUtils.getCurrentUid()).then((value) {
-          if (value != null) {
-            UserModel driverUserModel = value;
-            driverUserModel.fcmToken = token;
-            FireStoreUtils.updateUser(driverUserModel);
-          }
-        });
-      }
+      // FCM token write is owned by SplashController (partial update only).
+      if (FirebaseAuth.instance.currentUser == null) return;
+      final token = await NotificationService.getToken();
+      await FireStoreUtils.updateFcmTokenIfChanged(
+        userId: FireStoreUtils.getCurrentUid(),
+        token: token,
+      );
     });
   }
 }

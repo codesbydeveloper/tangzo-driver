@@ -7,6 +7,7 @@ import 'package:driver/constant/show_toast_dialog.dart';
 import 'package:driver/models/order_model.dart';
 import 'package:driver/models/wallet_transaction_model.dart';
 import 'package:driver/services/audio_player_service.dart';
+import 'package:driver/services/driver_cashback_service.dart';
 import 'package:driver/utils/fire_store_utils.dart';
 import 'package:get/get.dart';
 
@@ -82,6 +83,48 @@ class DeliverOrderController extends GetxController {
         } catch (e, s) {
           log('cashback credit failed: $e\n$s');
         }
+      }
+
+      // Tangzo-driver cashback (separate from delivery-fee credit; allowed on free delivery).
+      // Attach here if accept missed it (stale settings flag / older build).
+      try {
+        final driverId = orderModel.value.driverID ?? Constant.userModel?.id ?? '';
+        if ((orderModel.value.driverCashback?.cashbackValue ?? 0) <= 0 ||
+            orderModel.value.driverCashback?.id == null) {
+          orderModel.value = await DriverCashbackService.attachIfEligible(
+            order: orderModel.value,
+            driverId: driverId,
+          );
+          if ((orderModel.value.driverCashback?.cashbackValue ?? 0) > 0) {
+            await FireStoreUtils.setOrder(orderModel.value);
+          }
+        }
+
+        final driverCashbackValue =
+            double.tryParse("${orderModel.value.driverCashback?.cashbackValue ?? 0.0}") ?? 0.0;
+        if (driverCashbackValue > 0 && orderModel.value.driverCashback?.id != null) {
+          final txn = WalletTransactionModel(
+            id: Constant.getUuid(),
+            amount: driverCashbackValue,
+            date: Timestamp.now(),
+            paymentMethod: "Driver Cashback",
+            transactionUser: "driver",
+            userId: driverId,
+            isTopup: true,
+            orderId: orderModel.value.id,
+            note: "Driver Cashback",
+            paymentStatus: "success",
+          );
+          final added = await FireStoreUtils.setWalletTransaction(txn);
+          if (added == true && driverId.isNotEmpty) {
+            await FireStoreUtils.updateUserWallet(
+              amount: driverCashbackValue.toString(),
+              userId: driverId,
+            );
+          }
+        }
+      } catch (e, s) {
+        log('driver cashback credit failed: $e\n$s');
       }
 
       try {

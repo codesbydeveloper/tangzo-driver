@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:driver/models/cart_product_model.dart';
 import 'package:driver/models/cashbackModel.dart';
+import 'package:driver/models/driver_cashback_model.dart';
 import 'package:driver/models/tax_model.dart';
 import 'package:driver/models/user_model.dart';
 import 'package:driver/models/vendor_model.dart';
@@ -37,13 +38,11 @@ class OrderModel {
   bool? takeAway;
   List<dynamic>? rejectedByDrivers;
   CashbackModel? cashback;
+  DriverCashbackModel? driverCashback;
   bool? isFreeDelivery;
   bool? isPosOrder;
   String? taxScope;
   String? platformFee;
-  String? deliveryPartner;
-  Map<String, dynamic>? shadowfax;
-
   OrderModel(
       {this.address,
         this.status,
@@ -73,12 +72,11 @@ class OrderModel {
         this.takeAway,
         this.rejectedByDrivers,
         this.cashback,
+        this.driverCashback,
         this.isFreeDelivery,
         this.driverDeliveryTax,
         this.packagingTax,
-        this.platformTax,this.taxScope, this.platformFee,this.isPosOrder,
-        this.deliveryPartner,
-        this.shadowfax});
+        this.platformTax,this.taxScope, this.platformFee,this.isPosOrder});
 
   OrderModel.fromJson(Map<String, dynamic> json) {
     address = json['address'] != null ? ShippingAddress.fromJson(json['address']) : null;
@@ -113,6 +111,7 @@ class OrderModel {
     takeAway = json['takeAway'];
     rejectedByDrivers = json['rejectedByDrivers'] ?? [];
     cashback = json['cashback'] != null ? CashbackModel.fromJson(json['cashback']) : null;
+    driverCashback = json['driverCashback'] != null ? DriverCashbackModel.fromJson(json['driverCashback']) : null;
     isFreeDelivery = json['isFreeDelivery'] ?? false;
     if (json['taxSetting'] != null) {
       taxSetting = <TaxModel>[];
@@ -142,8 +141,6 @@ class OrderModel {
     taxScope = json['taxScope'];
     platformFee = json['platformFee'];
     isPosOrder = json['isPosOrder'] ?? false;
-    deliveryPartner = json['deliveryPartner']?.toString();
-    shadowfax = json['shadowfax'] is Map ? Map<String, dynamic>.from(json['shadowfax']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -185,6 +182,7 @@ class OrderModel {
     data['takeAway'] = takeAway;
     data['rejectedByDrivers'] = rejectedByDrivers;
     data['cashback'] = cashback?.toJson();
+    data['driverCashback'] = driverCashback?.toJson();
     data['isFreeDelivery'] = isFreeDelivery ?? false;
     if (taxSetting != null) {
       data['taxSetting'] = taxSetting!.map((v) => v.toJson()).toList();
@@ -201,12 +199,6 @@ class OrderModel {
     data['taxScope'] = taxScope;
     data['platformFee'] = platformFee;
     data['isPosOrder'] = isPosOrder ?? false;
-    if (deliveryPartner != null) {
-      data['deliveryPartner'] = deliveryPartner;
-    }
-    if (shadowfax != null) {
-      data['shadowfax'] = shadowfax;
-    }
     return data;
   }
 }

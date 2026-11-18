@@ -10,6 +10,7 @@ import 'package:driver/constant/show_toast_dialog.dart';
 import 'package:driver/models/order_model.dart';
 import 'package:driver/models/user_model.dart';
 import 'package:driver/services/audio_player_service.dart';
+import 'package:driver/services/driver_cashback_service.dart';
 import 'package:driver/themes/app_them_data.dart';
 import 'package:driver/utils/fire_store_utils.dart';
 import 'package:flutter/material.dart';
@@ -117,7 +118,7 @@ class HomeController extends GetxController {
     ShowToastDialog.showLoader("Please wait");
     await AudioPlayerService.playSound(false);
 
-    // Re-read order before accept — may already be claimed by Shadowfax
+    // Re-read order before accept — may already be claimed
     final orderId = currentOrder.value.id;
     if (orderId == null || orderId.isEmpty) {
       ShowToastDialog.closeLoader();
@@ -126,7 +127,6 @@ class HomeController extends GetxController {
     }
     final fresh = await FireStoreUtils.getOrderById(orderId);
     if (fresh == null ||
-        Constant.isShadowfaxPartner(fresh.deliveryPartner) ||
         fresh.status == Constant.noRiderAvailable ||
         fresh.status == Constant.orderCancelled ||
         fresh.status == Constant.orderRejected ||
@@ -153,11 +153,22 @@ class HomeController extends GetxController {
     currentOrder.value.driverID = driverModel.value.id;
     currentOrder.value.driver = driverModel.value;
 
+    currentOrder.value = await DriverCashbackService.attachIfEligible(
+      order: currentOrder.value,
+      driverId: driverModel.value.id ?? '',
+    );
+
     await FireStoreUtils.setOrder(currentOrder.value);
 
     await SendNotification.sendFcmMessage(Constant.driverAcceptedNotification, currentOrder.value.author!.fcmToken.toString(), {});
     await SendNotification.sendFcmMessage(Constant.driverAcceptedNotification, currentOrder.value.vendor!.fcmToken.toString(), {});
     ShowToastDialog.closeLoader();
+    final cb = currentOrder.value.driverCashback?.cashbackValue ?? 0;
+    if (cb > 0) {
+      ShowToastDialog.showToast(
+        "You'll get ${Constant.amountShow(amount: cb.toString())} cashback",
+      );
+    }
   }
 
   Future<void> rejectOrder() async {
@@ -166,6 +177,7 @@ class HomeController extends GetxController {
     await AudioPlayerService.playSound(false);
     currentOrder.value.rejectedByDrivers?.add(driverModel.value.id);
     currentOrder.value.status = Constant.driverRejected;
+    currentOrder.value = await DriverCashbackService.clearForOrder(currentOrder.value);
     await FireStoreUtils.setOrder(currentOrder.value);
     driverModel.value.orderRequestData?.remove(currentOrder.value.id);
     await FireStoreUtils.updateUser(driverModel.value);
@@ -293,9 +305,8 @@ class HomeController extends GetxController {
           (snap) async {
             if (snap.docs.isNotEmpty) {
               final newOrder = OrderModel.fromJson(snap.docs.first.data());
-              // Never show Shadowfax / no-rider orders in driver UI
-              if (Constant.isShadowfaxPartner(newOrder.deliveryPartner) ||
-                  newOrder.status == Constant.noRiderAvailable) {
+              // Never show no-rider orders in driver UI
+              if (newOrder.status == Constant.noRiderAvailable) {
                 driverModel.value.orderRequestData?.remove(newOrder.id);
                 driverModel.value.inProgressOrderID?.remove(newOrder.id);
                 await FireStoreUtils.updateUser(driverModel.value);

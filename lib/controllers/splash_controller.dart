@@ -39,8 +39,12 @@ class SplashController extends GetxController {
                 log(userModel.toJson().toString());
                 if (userModel.role == Constant.userRoleDriver) {
                   if (userModel.active == true) {
-                    userModel.fcmToken = await NotificationService.getToken();
-                    await FireStoreUtils.updateUser(userModel);
+                    final token = await NotificationService.getToken();
+                    userModel.fcmToken = token;
+                    await FireStoreUtils.updateFcmTokenIfChanged(
+                      userId: userModel.id ?? FireStoreUtils.getCurrentUid(),
+                      token: token,
+                    );
                     RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
                     if (initialMessage != null && initialMessage.data['type'] != null) {
                       // handleMessageClick(role: initialMessage.data['chatType'], type: initialMessage.data['type'], isBgApp: true);

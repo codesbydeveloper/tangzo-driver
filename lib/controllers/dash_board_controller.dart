@@ -38,6 +38,7 @@ class DashBoardController extends GetxController {
     getUser();
     updateDriverOrder();
     getThem();
+    FireStoreUtils.ensureDriverLiveSettingsAttached();
     super.onInit();
   }
 

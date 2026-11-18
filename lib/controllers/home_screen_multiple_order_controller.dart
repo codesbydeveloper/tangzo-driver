@@ -5,6 +5,7 @@ import 'package:driver/constant/show_toast_dialog.dart';
 import 'package:driver/models/order_model.dart';
 import 'package:driver/models/user_model.dart';
 import 'package:driver/services/audio_player_service.dart';
+import 'package:driver/services/driver_cashback_service.dart';
 import 'package:driver/utils/fire_store_utils.dart';
 import 'package:get/get.dart';
 
@@ -67,7 +68,6 @@ class HomeScreenMultipleOrderController extends GetxController {
     }
     final fresh = await FireStoreUtils.getOrderById(orderId);
     if (fresh == null ||
-        Constant.isShadowfaxPartner(fresh.deliveryPartner) ||
         fresh.status == Constant.noRiderAvailable ||
         fresh.status == Constant.orderCancelled ||
         fresh.status == Constant.orderRejected ||
@@ -91,10 +91,20 @@ class HomeScreenMultipleOrderController extends GetxController {
     currentOrder.status = Constant.driverAccepted;
     currentOrder.driverID = driverModel.value.id;
     currentOrder.driver = driverModel.value;
-    await FireStoreUtils.setOrder(currentOrder);
+    final withCashback = await DriverCashbackService.attachIfEligible(
+      order: currentOrder,
+      driverId: driverModel.value.id ?? '',
+    );
+    await FireStoreUtils.setOrder(withCashback);
     await SendNotification.sendFcmMessage(Constant.driverAcceptedNotification, currentOrder.author!.fcmToken.toString(), {});
     await SendNotification.sendFcmMessage(Constant.driverAcceptedNotification, currentOrder.vendor!.fcmToken.toString(), {});
     ShowToastDialog.closeLoader();
+    final cb = withCashback.driverCashback?.cashbackValue ?? 0;
+    if (cb > 0) {
+      ShowToastDialog.showToast(
+        "You'll get ${Constant.amountShow(amount: cb.toString())} cashback",
+      );
+    }
   }
 
   Future<void> rejectOrder(OrderModel currentOrder) async {
@@ -102,7 +112,8 @@ class HomeScreenMultipleOrderController extends GetxController {
     await AudioPlayerService.playSound(false);
     currentOrder.rejectedByDrivers?.add(driverModel.value.id);
     // currentOrder.status = Constant.driverRejected;
-    await FireStoreUtils.setOrder(currentOrder);
+    final cleared = await DriverCashbackService.clearForOrder(currentOrder);
+    await FireStoreUtils.setOrder(cleared);
     driverModel.value.orderRequestData?.remove(currentOrder.id);
     await FireStoreUtils.updateUser(driverModel.value);
     ShowToastDialog.closeLoader();

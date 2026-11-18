@@ -167,8 +167,7 @@ class HomeScreenMultipleOrder extends StatelessWidget {
                                                                               return const SizedBox();
                                                                             } else {
                                                                               OrderModel orderModel = snapshot.data!;
-                                                                              if (Constant.isShadowfaxPartner(orderModel.deliveryPartner) ||
-                                                                                  orderModel.status == Constant.noRiderAvailable) {
+                                                                              if (orderModel.status == Constant.noRiderAvailable) {
                                                                                 return const SizedBox();
                                                                               }
                                                                               double distanceInMeters = Geolocator.distanceBetween(
@@ -417,6 +416,19 @@ class HomeScreenMultipleOrder extends StatelessWidget {
                                                                                               ),
                                                                                             ],
                                                                                           ),
+                                                                                    if ((orderModel.driverCashback?.cashbackValue ?? 0) > 0)
+                                                                                      Padding(
+                                                                                        padding: const EdgeInsets.only(bottom: 8),
+                                                                                        child: Text(
+                                                                                          "You'll get ${Constant.amountShow(amount: orderModel.driverCashback!.cashbackValue.toString())} cashback",
+                                                                                          textAlign: TextAlign.start,
+                                                                                          style: TextStyle(
+                                                                                            fontFamily: AppThemeData.medium,
+                                                                                            color: AppThemeData.success400,
+                                                                                            fontSize: 14,
+                                                                                          ),
+                                                                                        ),
+                                                                                      ),
                                                                                     const SizedBox(
                                                                                       height: 10,
                                                                                     ),

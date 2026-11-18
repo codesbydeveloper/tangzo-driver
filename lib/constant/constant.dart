@@ -58,6 +58,7 @@ class Constant {
   static String minimumAmountToWithdrawal = '0.0';
 
   static bool isDriverVerification = false;
+  static bool isDriverCashbackActive = false;
 
   static ZoneModel? selectedZone;
 
@@ -93,14 +94,6 @@ class Constant {
   static const String orderCompleted = "Order Completed";
   static const String orderCancelled = "Order Cancelled";
   static const String noRiderAvailable = "No Rider Available";
-
-  static const String deliveryPartnerShadowfax = "shadowfax";
-  static const String deliveryPartnerShadowfaxPending = "shadowfax_pending";
-
-  static bool isShadowfaxPartner(String? deliveryPartner) {
-    return deliveryPartner == deliveryPartnerShadowfax ||
-        deliveryPartner == deliveryPartnerShadowfaxPending;
-  }
 
   static CurrencyModel? currencyModel;
   static List<TaxModel>? taxList = [];

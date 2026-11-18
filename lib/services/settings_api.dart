@@ -6,14 +6,17 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 const bool kUseSettingsCache = true;
-/// Background refresh only — cold starts often exceed 4s.
 const Duration kSettingsCfTimeout = Duration(seconds: 20);
+const Duration kSettingsCfRaceTimeout = Duration(milliseconds: 2500);
 
 class SettingsApi {
   SettingsApi._();
 
-  static const _prefsKey = 'settings_bundle_driver_v1';
-  static const _prefsVersionKey = 'settings_bundle_driver_version_v1';
+  static const _prefsKey = 'settings_bundle_driver_v2';
+  static const _prefsVersionKey = 'settings_bundle_driver_version_v2';
+
+  static Future<SettingsBundleResult?>? _prefetchFuture;
+  static int? _appliedVersion;
 
   static Uri _callableUri(String functionName) {
     final projectId = DefaultFirebaseOptions.currentPlatform.projectId;
@@ -22,24 +25,84 @@ class SettingsApi {
     );
   }
 
-  /// Prefs only — never blocks on CF.
+  static void prefetch() {
+    if (!kUseSettingsCache) return;
+    _prefetchFuture ??= fetchFromCloudFunction().then((bundle) async {
+      if (bundle != null) await writePrefs(bundle);
+      return bundle;
+    });
+  }
+
   static Future<SettingsBundleResult?> getBundle({bool forceRefresh = false}) async {
     if (!kUseSettingsCache) return null;
     if (!forceRefresh) {
-      final cached = await _readPrefs();
+      final cached = await readPrefs();
       if (cached != null) return cached;
     }
     return null;
   }
 
-  static Future<void> refreshInBackground() async {
+  static Future<SettingsBundleResult?> raceBundle({
+    required Future<Map<String, Map<String, dynamic>?>> Function()
+        firestoreLoader,
+  }) async {
+    if (!kUseSettingsCache) {
+      final docs = await firestoreLoader();
+      return SettingsBundleResult(
+        docs: docs,
+        version: DateTime.now().millisecondsSinceEpoch,
+        source: 'firestore',
+      );
+    }
+
+    final prefs = await readPrefs();
+    if (prefs != null && prefs.docs.isNotEmpty) return prefs;
+
+    prefetch();
+    final cfFuture = (_prefetchFuture ?? fetchFromCloudFunction()).timeout(
+      kSettingsCfRaceTimeout,
+      onTimeout: () => null,
+    );
+    final fsFuture = firestoreLoader().then(
+      (docs) => SettingsBundleResult(
+        docs: docs,
+        version: DateTime.now().millisecondsSinceEpoch,
+        source: 'firestore',
+      ),
+    );
+
+    final first = await Future.any<SettingsBundleResult?>([cfFuture, fsFuture]);
+    if (first != null && first.docs.isNotEmpty) {
+      await writePrefs(first);
+      // ignore: unawaited_futures
+      cfFuture.then((cf) async {
+        if (cf != null && cf.docs.isNotEmpty) await writePrefs(cf);
+      });
+      return first;
+    }
+    final fallback = await fsFuture;
+    await writePrefs(fallback);
+    return fallback;
+  }
+
+  static Future<void> refreshInBackground({
+    void Function(SettingsBundleResult bundle)? onFresh,
+  }) async {
     if (!kUseSettingsCache) return;
     try {
       final bundle = await fetchFromCloudFunction();
-      if (bundle != null) await _writePrefs(bundle);
+      if (bundle == null) return;
+      await writePrefs(bundle);
+      if (bundle.version > (_appliedVersion ?? 0)) {
+        onFresh?.call(bundle);
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('[SettingsApi] background refresh failed: $e');
     }
+  }
+
+  static void markApplied(SettingsBundleResult bundle) {
+    _appliedVersion = bundle.version;
   }
 
   static Future<SettingsBundleResult?> fetchFromCloudFunction({
@@ -56,7 +119,9 @@ class SettingsApi {
           )
           .timeout(kSettingsCfTimeout);
       final decoded = jsonDecode(response.body);
-      if (decoded is! Map || decoded['error'] != null || response.statusCode != 200) {
+      if (decoded is! Map ||
+          decoded['error'] != null ||
+          response.statusCode != 200) {
         return null;
       }
       final result = decoded['result'];
@@ -82,7 +147,7 @@ class SettingsApi {
     }
   }
 
-  static Future<SettingsBundleResult?> _readPrefs() async {
+  static Future<SettingsBundleResult?> readPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_prefsKey);
@@ -101,7 +166,7 @@ class SettingsApi {
     }
   }
 
-  static Future<void> _writePrefs(SettingsBundleResult bundle) async {
+  static Future<void> writePrefs(SettingsBundleResult bundle) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_prefsKey, jsonEncode(bundle.docs));

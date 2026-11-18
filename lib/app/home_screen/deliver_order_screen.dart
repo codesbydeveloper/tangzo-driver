@@ -44,6 +44,18 @@ class DeliverOrderScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if ((controller.orderModel.value.driverCashback?.cashbackValue ?? 0) > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                "You'll get ${Constant.amountShow(amount: controller.orderModel.value.driverCashback!.cashbackValue.toString())} cashback on completion",
+                                style: TextStyle(
+                                  fontFamily: AppThemeData.medium,
+                                  color: AppThemeData.success400,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
                           Container(
                             decoration: ShapeDecoration(
                               color: themeChange.getThem() ? AppThemeData.grey900 : AppThemeData.grey50,
