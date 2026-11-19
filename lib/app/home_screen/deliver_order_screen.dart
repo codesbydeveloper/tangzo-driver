@@ -48,7 +48,7 @@ class DeliverOrderScreen extends StatelessWidget {
                             Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: Text(
-                                "You'll get ${Constant.amountShow(amount: controller.orderModel.value.driverCashback!.cashbackValue.toString())} cashback on completion",
+                                "${Constant.amountShow(amount: controller.orderModel.value.driverCashback!.cashbackValue.toString())} cashback additional once completed",
                                 style: TextStyle(
                                   fontFamily: AppThemeData.medium,
                                   color: AppThemeData.success400,

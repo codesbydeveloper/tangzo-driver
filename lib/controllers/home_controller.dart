@@ -70,6 +70,7 @@ class HomeController extends GetxController {
   // subscriptions
   StreamSubscription? _driverSub;
   StreamSubscription? _orderSub;
+  String? _cashbackPreviewOrderId;
 
   // Camera follow throttle
   DateTime _lastCameraFollow = DateTime.fromMillisecondsSinceEpoch(0);
@@ -166,7 +167,7 @@ class HomeController extends GetxController {
     final cb = currentOrder.value.driverCashback?.cashbackValue ?? 0;
     if (cb > 0) {
       ShowToastDialog.showToast(
-        "You'll get ${Constant.amountShow(amount: cb.toString())} cashback",
+        "${Constant.amountShow(amount: cb.toString())} cashback additional once completed",
       );
     }
   }
@@ -317,6 +318,21 @@ class HomeController extends GetxController {
                 return;
               }
               currentOrder.value = newOrder;
+              if (newOrder.status == Constant.driverPending &&
+                  (driverModel.value.vendorID?.isEmpty ?? true) &&
+                  _cashbackPreviewOrderId != newOrder.id) {
+                _cashbackPreviewOrderId = newOrder.id;
+                final previewed = await DriverCashbackService.previewIfEligible(
+                  order: newOrder,
+                  driverId: driverModel.value.id ?? '',
+                );
+                if (currentOrder.value.id == previewed.id) {
+                  currentOrder.value = previewed;
+                  currentOrder.refresh();
+                }
+              } else if (newOrder.status != Constant.driverPending) {
+                _cashbackPreviewOrderId = null;
+              }
               changeData();
             } else {
               if (Constant.selectedMapType == 'osm') {

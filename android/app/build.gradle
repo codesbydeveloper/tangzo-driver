@@ -63,7 +63,7 @@ android {
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
 
-        versionCode = 18
+        versionCode = 20
         versionName = flutterVersionName
 
         // Ship ARM ABIs only.

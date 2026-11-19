@@ -3,6 +3,7 @@ import 'package:driver/constant/constant.dart';
 import 'package:driver/controllers/dash_board_controller.dart';
 import 'package:driver/controllers/home_screen_multiple_order_controller.dart';
 import 'package:driver/models/order_model.dart';
+import 'package:driver/services/driver_cashback_service.dart';
 import 'package:driver/themes/app_them_data.dart';
 import 'package:driver/themes/round_button_fill.dart';
 import 'package:driver/utils/dark_theme_provider.dart';
@@ -156,7 +157,17 @@ class HomeScreenMultipleOrder extends StatelessWidget {
                                                                   child: Padding(
                                                                     padding: const EdgeInsets.all(8.0),
                                                                     child: FutureBuilder(
-                                                                        future: FireStoreUtils.getOrderById(controller.newOrder[index]),
+                                                                        future: () async {
+                                                                          final order = await FireStoreUtils.getOrderById(controller.newOrder[index]);
+                                                                          if (order == null) return null;
+                                                                          if (controller.driverModel.value.vendorID?.isEmpty != true) {
+                                                                            return order;
+                                                                          }
+                                                                          return DriverCashbackService.previewIfEligible(
+                                                                            order: order,
+                                                                            driverId: controller.driverModel.value.id ?? '',
+                                                                          );
+                                                                        }(),
                                                                         builder: (context, snapshot) {
                                                                           if (snapshot.connectionState == ConnectionState.waiting) {
                                                                             return const SizedBox();
@@ -420,12 +431,12 @@ class HomeScreenMultipleOrder extends StatelessWidget {
                                                                                       Padding(
                                                                                         padding: const EdgeInsets.only(bottom: 8),
                                                                                         child: Text(
-                                                                                          "You'll get ${Constant.amountShow(amount: orderModel.driverCashback!.cashbackValue.toString())} cashback",
+                                                                                          "${Constant.amountShow(amount: orderModel.driverCashback!.cashbackValue.toString())} cashback additional once completed",
                                                                                           textAlign: TextAlign.start,
                                                                                           style: TextStyle(
-                                                                                            fontFamily: AppThemeData.medium,
+                                                                                            fontFamily: AppThemeData.semiBold,
                                                                                             color: AppThemeData.success400,
-                                                                                            fontSize: 14,
+                                                                                            fontSize: 15,
                                                                                           ),
                                                                                         ),
                                                                                       ),

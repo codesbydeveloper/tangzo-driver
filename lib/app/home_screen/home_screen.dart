@@ -481,12 +481,12 @@ class HomeScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 6, bottom: 2),
                   child: Text(
-                    "You'll get ${Constant.amountShow(amount: controller.currentOrder.value.driverCashback!.cashbackValue.toString())} cashback",
+                    "${Constant.amountShow(amount: controller.currentOrder.value.driverCashback!.cashbackValue.toString())} cashback additional once completed",
                     textAlign: TextAlign.start,
                     style: TextStyle(
-                      fontFamily: AppThemeData.medium,
+                      fontFamily: AppThemeData.semiBold,
                       color: AppThemeData.success400,
-                      fontSize: 14,
+                      fontSize: 15,
                     ),
                   ),
                 ),
@@ -1085,12 +1085,12 @@ class HomeScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 6, bottom: 2),
                     child: Text(
-                      "You'll get ${Constant.amountShow(amount: controller.currentOrder.value.driverCashback!.cashbackValue.toString())} cashback",
+                      "${Constant.amountShow(amount: controller.currentOrder.value.driverCashback!.cashbackValue.toString())} cashback additional once completed",
                       textAlign: TextAlign.start,
                       style: TextStyle(
-                        fontFamily: AppThemeData.medium,
+                        fontFamily: AppThemeData.semiBold,
                         color: AppThemeData.success400,
-                        fontSize: 14,
+                        fontSize: 15,
                       ),
                     ),
                   ),

@@ -92,6 +92,20 @@ class DriverCashbackService {
     return best;
   }
 
+  /// In-memory preview for accept sheet — does not write redeem/ledger.
+  static Future<OrderModel> previewIfEligible({
+    required OrderModel order,
+    required String driverId,
+  }) async {
+    if ((order.driverCashback?.cashbackValue ?? 0) > 0) return order;
+    try {
+      order.driverCashback = await selectBestOffer(order: order, driverId: driverId);
+    } catch (e, s) {
+      log('driver cashback preview failed: $e\n$s');
+    }
+    return order;
+  }
+
   /// Attaches offer + redeem ledger after Tangzo driver accept/assign.
   /// Idempotent when the same driver already has cashback on the order.
   static Future<OrderModel> attachIfEligible({

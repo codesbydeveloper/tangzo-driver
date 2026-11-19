@@ -102,7 +102,7 @@ class HomeScreenMultipleOrderController extends GetxController {
     final cb = withCashback.driverCashback?.cashbackValue ?? 0;
     if (cb > 0) {
       ShowToastDialog.showToast(
-        "You'll get ${Constant.amountShow(amount: cb.toString())} cashback",
+        "${Constant.amountShow(amount: cb.toString())} cashback additional once completed",
       );
     }
   }
