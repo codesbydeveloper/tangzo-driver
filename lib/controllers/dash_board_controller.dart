@@ -107,11 +107,19 @@ class DashBoardController extends GetxController {
           });
         });
 
-    orders.forEach((element) async {
-      OrderModel orderModel = element;
-      orderModel.triggerDelivery = Timestamp.now();
-      await FireStoreUtils.setOrder(orderModel);
-    });
+    // Only bump triggerDelivery — never full-document set() (avoids stale status overwrites).
+    for (final order in orders) {
+      final id = order.id;
+      if (id == null || id.isEmpty) continue;
+      try {
+        await FireStoreUtils.fireStore
+            .collection(CollectionName.restaurantOrders)
+            .doc(id)
+            .update({'triggerDelivery': Timestamp.now()});
+      } catch (e) {
+        log('updateDriverOrder trigger bump failed for $id: $e');
+      }
+    }
   }
 
   Location location = Location();

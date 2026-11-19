@@ -14,9 +14,11 @@ import 'package:driver/themes/styles.dart';
 import 'package:driver/utils/dark_theme_provider.dart';
 
 import 'package:driver/utils/fire_store_utils.dart';
+import 'package:driver/utils/notification_service.dart';
 import 'package:driver/utils/preferences.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -28,6 +30,7 @@ void main() async {
     FirebaseApp firebaseApp = await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessageBackgroundHandle);
 
     if (currentEnv == FirebaseEnv.defaultDb) {
       FireStoreUtils.instance.init(firebaseApp);
